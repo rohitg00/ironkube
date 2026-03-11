@@ -23,6 +23,8 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewDestroyCmd())
 	cmd.AddCommand(NewStatusCmd())
 	cmd.AddCommand(NewDiffCmd())
+	cmd.AddCommand(NewCertsCmd())
+	cmd.AddCommand(NewEtcdCmd())
 
 	return cmd
 }
