@@ -80,15 +80,15 @@ func (c *Client) Run(cmd string) (string, error) {
 	}
 	defer session.Close()
 
-	var buf bytes.Buffer
-	session.Stdout = &buf
-	session.Stderr = &buf
+	var stdout, stderr bytes.Buffer
+	session.Stdout = &stdout
+	session.Stderr = &stderr
 
 	if err := session.Run(cmd); err != nil {
-		return buf.String(), fmt.Errorf("command failed: %w", err)
+		return stdout.String() + stderr.String(), fmt.Errorf("command failed on %s: %w\nstderr: %s", c.host, err, stderr.String())
 	}
 
-	return buf.String(), nil
+	return stdout.String(), nil
 }
 
 func (c *Client) RunStream(cmd string, stdout, stderr io.Writer) error {

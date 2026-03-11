@@ -1,0 +1,20 @@
+apiVersion: ironkube.io/v1alpha1
+kind: Cluster
+metadata:
+  name: e2e-test
+spec:
+  distro: k3s
+  version: v1.34.3+k3s1
+  controlPlane:
+    replicas: 1
+    nodes:
+      - host: 127.0.0.1
+        user: root
+        port: 2222
+        keyPath: ./test/e2e/keys/test_key
+  security:
+    profile: minimal
+  networking:
+    cni: flannel
+    podCIDR: 10.42.0.0/16
+    serviceCIDR: 10.43.0.0/16
