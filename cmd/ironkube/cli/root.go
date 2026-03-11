@@ -29,6 +29,9 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewBackupCmd())
 	cmd.AddCommand(NewFleetCmd())
 	cmd.AddCommand(NewAirgapCmd())
+	cmd.AddCommand(NewSecurityCmd())
+	cmd.AddCommand(NewConfigCmd())
+	cmd.AddCommand(NewStateCmd())
 
 	return cmd
 }

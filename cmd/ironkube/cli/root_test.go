@@ -24,6 +24,26 @@ func TestVersionCommand(t *testing.T) {
 	assert.Contains(t, buf.String(), "ironkube version")
 }
 
+func TestVersionShowsGoVersion(t *testing.T) {
+	cmd := NewRootCmd()
+	buf := new(bytes.Buffer)
+	cmd.SetOut(buf)
+	cmd.SetArgs([]string{"version"})
+	err := cmd.Execute()
+	require.NoError(t, err)
+	assert.Contains(t, buf.String(), "go: go1.")
+}
+
+func TestVersionShowsPlatform(t *testing.T) {
+	cmd := NewRootCmd()
+	buf := new(bytes.Buffer)
+	cmd.SetOut(buf)
+	cmd.SetArgs([]string{"version"})
+	err := cmd.Execute()
+	require.NoError(t, err)
+	assert.Contains(t, buf.String(), "platform:")
+}
+
 func TestRootHelpDoesNotError(t *testing.T) {
 	cmd := NewRootCmd()
 	cmd.SetArgs([]string{"--help"})
