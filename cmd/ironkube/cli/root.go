@@ -27,6 +27,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewEtcdCmd())
 	cmd.AddCommand(NewUpgradeCmd())
 	cmd.AddCommand(NewBackupCmd())
+	cmd.AddCommand(NewFleetCmd())
 
 	return cmd
 }
