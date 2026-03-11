@@ -12,8 +12,9 @@ import (
 
 func NewInitCmd() *cobra.Command {
 	var (
-		configPath string
-		dryRun     bool
+		configPath     string
+		dryRun         bool
+		kubeconfigPath string
 	)
 
 	cmd := &cobra.Command{
@@ -25,11 +26,11 @@ func NewInitCmd() *cobra.Command {
 				return fmt.Errorf("loading config: %w", err)
 			}
 
-			pipeline := engine.NewPipeline(
+			validatePipeline := engine.NewPipeline(
 				&phases.ValidatePhase{Config: cfg},
 			)
 
-			if err := pipeline.Execute(context.Background()); err != nil {
+			if err := validatePipeline.Execute(context.Background()); err != nil {
 				return err
 			}
 
@@ -40,6 +41,17 @@ func NewInitCmd() *cobra.Command {
 				return nil
 			}
 
+			pipeline := engine.NewPipeline(
+				&phases.ValidatePhase{Config: cfg},
+				&phases.ConnectPhase{Config: cfg},
+				&phases.BootstrapPhase{Config: cfg},
+				&phases.FetchKubeconfigPhase{Config: cfg, OutputPath: kubeconfigPath},
+			)
+
+			if err := pipeline.Execute(context.Background()); err != nil {
+				return err
+			}
+
 			fmt.Fprintf(cmd.OutOrStdout(), "Cluster %q initialized successfully\n", cfg.Metadata.Name)
 			return nil
 		},
@@ -47,6 +59,7 @@ func NewInitCmd() *cobra.Command {
 
 	cmd.Flags().StringVarP(&configPath, "config", "c", "ironkube.yaml", "Path to cluster config file")
 	cmd.Flags().BoolVar(&dryRun, "dry-run", false, "Validate config without bootstrapping")
+	cmd.Flags().StringVar(&kubeconfigPath, "kubeconfig", "", "Path to save kubeconfig (default: ~/.kube/config)")
 	return cmd
 }
 

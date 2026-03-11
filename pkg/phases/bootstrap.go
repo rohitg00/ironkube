@@ -1,0 +1,140 @@
+package phases
+
+import (
+	"context"
+	"crypto/rand"
+	"encoding/hex"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/rohitg00/ironkube/pkg/config"
+	"github.com/rohitg00/ironkube/pkg/distro"
+	"github.com/rohitg00/ironkube/pkg/engine"
+	"github.com/rohitg00/ironkube/pkg/ssh"
+)
+
+type BootstrapPhase struct {
+	Config *config.ClusterConfig
+}
+
+func (p *BootstrapPhase) Name() string { return "bootstrap" }
+
+func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
+	v, ok := state.Get("executor")
+	if !ok {
+		return fmt.Errorf("executor not found in state")
+	}
+	exec := v.(*ssh.Executor)
+
+	v, ok = state.Get("distro_plugin")
+	if !ok {
+		return fmt.Errorf("distro_plugin not found in state")
+	}
+	plugin := v.(distro.Plugin)
+
+	token := generateToken()
+	state.Set("cluster_token", token)
+
+	firstNode := p.Config.Spec.ControlPlane.Nodes[0]
+	installCmd := plugin.ServerInstallScript(firstNode, p.Config, token, true)
+
+	out, err := exec.RunOnHost(firstNode.Host, installCmd)
+	if err != nil {
+		return fmt.Errorf("failed to bootstrap first control plane node %s: %w\nOutput: %s", firstNode.Host, err, out)
+	}
+
+	if err := waitForNode(ctx, exec, firstNode.Host, plugin); err != nil {
+		return fmt.Errorf("first control plane node did not become ready: %w", err)
+	}
+
+	for i := 1; i < len(p.Config.Spec.ControlPlane.Nodes); i++ {
+		node := p.Config.Spec.ControlPlane.Nodes[i]
+		joinCmd := plugin.ServerInstallScript(node, p.Config, token, false)
+
+		out, err := exec.RunOnHost(node.Host, joinCmd)
+		if err != nil {
+			return fmt.Errorf("failed to join control plane node %s: %w\nOutput: %s", node.Host, err, out)
+		}
+	}
+
+	for _, pool := range p.Config.Spec.Workers {
+		for _, node := range pool.Nodes {
+			serverURL := fmt.Sprintf("https://%s:6443", firstNode.Host)
+			agentCmd := plugin.AgentInstallScript(node, p.Config, serverURL, token)
+
+			out, err := exec.RunOnHost(node.Host, agentCmd)
+			if err != nil {
+				return fmt.Errorf("failed to join worker %s: %w\nOutput: %s", node.Host, err, out)
+			}
+		}
+	}
+
+	return nil
+}
+
+func (p *BootstrapPhase) Cleanup(ctx context.Context, state *engine.State) error {
+	v, ok := state.Get("executor")
+	if !ok {
+		return nil
+	}
+	exec := v.(*ssh.Executor)
+
+	v, ok = state.Get("distro_plugin")
+	if !ok {
+		return nil
+	}
+	plugin := v.(distro.Plugin)
+
+	for _, node := range p.Config.Spec.ControlPlane.Nodes {
+		_, _ = exec.RunOnHost(node.Host, plugin.UninstallCmd("server"))
+	}
+
+	for _, pool := range p.Config.Spec.Workers {
+		for _, node := range pool.Nodes {
+			_, _ = exec.RunOnHost(node.Host, plugin.UninstallCmd("agent"))
+		}
+	}
+
+	return nil
+}
+
+func waitForNode(ctx context.Context, exec *ssh.Executor, host string, plugin distro.Plugin) error {
+	checkCmd := fmt.Sprintf("%s get nodes --no-headers 2>/dev/null | head -1", kubectlCmd(plugin))
+
+	deadline := time.After(3 * time.Minute)
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-deadline:
+			return fmt.Errorf("timed out waiting for node to be ready on %s", host)
+		case <-ticker.C:
+			out, err := exec.RunOnHost(host, checkCmd)
+			if err != nil {
+				continue
+			}
+			if strings.Contains(out, "Ready") {
+				return nil
+			}
+		}
+	}
+}
+
+func kubectlCmd(plugin distro.Plugin) string {
+	switch plugin.Name() {
+	case "k3s":
+		return "k3s kubectl"
+	default:
+		return "kubectl"
+	}
+}
+
+func generateToken() string {
+	b := make([]byte, 32)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
+}
