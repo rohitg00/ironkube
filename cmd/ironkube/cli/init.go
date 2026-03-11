@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/rohitg00/ironkube/pkg/config"
@@ -30,7 +29,7 @@ func NewInitCmd() *cobra.Command {
 				&phases.ValidatePhase{Config: cfg},
 			)
 
-			if err := validatePipeline.Execute(context.Background()); err != nil {
+			if err := validatePipeline.Execute(cmd.Context()); err != nil {
 				return err
 			}
 
@@ -48,7 +47,7 @@ func NewInitCmd() *cobra.Command {
 				&phases.FetchKubeconfigPhase{Config: cfg, OutputPath: kubeconfigPath},
 			)
 
-			if err := pipeline.Execute(context.Background()); err != nil {
+			if err := pipeline.Execute(cmd.Context()); err != nil {
 				return err
 			}
 

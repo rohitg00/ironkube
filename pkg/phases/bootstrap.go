@@ -45,6 +45,7 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 	}
 
 	if err := waitForNode(ctx, exec, firstNode.Host, plugin); err != nil {
+		p.Cleanup(ctx, state)
 		return fmt.Errorf("first control plane node did not become ready: %w", err)
 	}
 
@@ -54,6 +55,7 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 
 		out, err := exec.RunOnHost(node.Host, joinCmd)
 		if err != nil {
+			p.Cleanup(ctx, state)
 			return fmt.Errorf("failed to join control plane node %s: %w\nOutput: %s", node.Host, err, out)
 		}
 	}
@@ -65,8 +67,21 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 
 			out, err := exec.RunOnHost(node.Host, agentCmd)
 			if err != nil {
+				p.Cleanup(ctx, state)
 				return fmt.Errorf("failed to join worker %s: %w\nOutput: %s", node.Host, err, out)
 			}
+		}
+	}
+
+	expectedNodes := len(p.Config.Spec.ControlPlane.Nodes)
+	for _, pool := range p.Config.Spec.Workers {
+		expectedNodes += len(pool.Nodes)
+	}
+
+	if expectedNodes > 1 {
+		if err := waitForAllNodes(ctx, exec, firstNode.Host, plugin, expectedNodes); err != nil {
+			p.Cleanup(ctx, state)
+			return fmt.Errorf("not all nodes became ready: %w", err)
 		}
 	}
 
@@ -100,7 +115,7 @@ func (p *BootstrapPhase) Cleanup(ctx context.Context, state *engine.State) error
 }
 
 func waitForNode(ctx context.Context, exec *ssh.Executor, host string, plugin distro.Plugin) error {
-	checkCmd := fmt.Sprintf("%s get nodes --no-headers 2>/dev/null | head -1", kubectlCmd(plugin))
+	checkCmd := fmt.Sprintf("%s get nodes --no-headers 2>/dev/null", kubectlCmd(plugin))
 
 	deadline := time.After(3 * time.Minute)
 	ticker := time.NewTicker(5 * time.Second)
@@ -117,11 +132,51 @@ func waitForNode(ctx context.Context, exec *ssh.Executor, host string, plugin di
 			if err != nil {
 				continue
 			}
-			if strings.Contains(out, "Ready") {
+			if hasReadyNode(out) {
 				return nil
 			}
 		}
 	}
+}
+
+func waitForAllNodes(ctx context.Context, exec *ssh.Executor, host string, plugin distro.Plugin, expected int) error {
+	checkCmd := fmt.Sprintf("%s get nodes --no-headers 2>/dev/null", kubectlCmd(plugin))
+
+	deadline := time.After(5 * time.Minute)
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-deadline:
+			return fmt.Errorf("timed out waiting for %d nodes to be ready on %s", expected, host)
+		case <-ticker.C:
+			out, err := exec.RunOnHost(host, checkCmd)
+			if err != nil {
+				continue
+			}
+			if countReadyNodes(out) >= expected {
+				return nil
+			}
+		}
+	}
+}
+
+func hasReadyNode(output string) bool {
+	return countReadyNodes(output) > 0
+}
+
+func countReadyNodes(output string) int {
+	count := 0
+	for _, line := range strings.Split(strings.TrimSpace(output), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && fields[1] == "Ready" {
+			count++
+		}
+	}
+	return count
 }
 
 func kubectlCmd(plugin distro.Plugin) string {
@@ -129,7 +184,7 @@ func kubectlCmd(plugin distro.Plugin) string {
 	case "k3s":
 		return "k3s kubectl"
 	default:
-		return "kubectl"
+		return "kubectl --kubeconfig=/etc/kubernetes/admin.conf"
 	}
 }
 

@@ -64,6 +64,15 @@ func TestFullK3sBootstrap(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, config.Validate(cfg))
 
+	t.Cleanup(func() {
+		client, err := ssh.NewClient(vmSSHConfig())
+		if err != nil {
+			return
+		}
+		defer client.Close()
+		client.Run("/usr/local/bin/k3s-uninstall.sh")
+	})
+
 	tmpKubeconfig := t.TempDir() + "/kubeconfig"
 
 	pipeline := engine.NewPipeline(
@@ -101,16 +110,10 @@ func TestFullK3sBootstrap(t *testing.T) {
 
 	out, err = exec.RunOnHost("127.0.0.1", "k3s kubectl get pods -A --no-headers")
 	require.NoError(t, err)
-	assert.True(t, len(strings.Split(strings.TrimSpace(out), "\n")) > 0, "should have system pods running")
-
-	t.Cleanup(func() {
-		client, err := ssh.NewClient(vmSSHConfig())
-		if err != nil {
-			return
-		}
-		defer client.Close()
-		client.Run("/usr/local/bin/k3s-uninstall.sh")
-	})
+	trimmed := strings.TrimSpace(out)
+	require.NotEmpty(t, trimmed, "should have system pods running")
+	lines := strings.Split(trimmed, "\n")
+	assert.Greater(t, len(lines), 0, "should have at least one system pod")
 }
 
 func TestValidateAndConnectPhases(t *testing.T) {

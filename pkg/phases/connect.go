@@ -17,7 +17,6 @@ func (p *ConnectPhase) Name() string { return "connect" }
 
 func (p *ConnectPhase) Run(ctx context.Context, state *engine.State) error {
 	exec := ssh.NewExecutor()
-	state.Set("executor", exec)
 
 	for _, node := range p.Config.Spec.ControlPlane.Nodes {
 		cfg := ssh.Config{
@@ -27,6 +26,7 @@ func (p *ConnectPhase) Run(ctx context.Context, state *engine.State) error {
 			KeyPath: node.KeyPath,
 		}
 		if err := exec.Connect(cfg); err != nil {
+			exec.Close()
 			return fmt.Errorf("failed to connect to %s: %w", node.Host, err)
 		}
 	}
@@ -40,11 +40,13 @@ func (p *ConnectPhase) Run(ctx context.Context, state *engine.State) error {
 				KeyPath: node.KeyPath,
 			}
 			if err := exec.Connect(cfg); err != nil {
+				exec.Close()
 				return fmt.Errorf("failed to connect to worker %s: %w", node.Host, err)
 			}
 		}
 	}
 
+	state.Set("executor", exec)
 	return nil
 }
 
