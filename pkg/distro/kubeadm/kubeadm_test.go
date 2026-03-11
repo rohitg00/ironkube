@@ -146,3 +146,38 @@ func TestUninstallCmd(t *testing.T) {
 		assert.Contains(t, cmd, "kubeadm reset")
 	})
 }
+
+func TestSecurityArgs(t *testing.T) {
+	p := New()
+
+	t.Run("apiserver and etcd flags", func(t *testing.T) {
+		result := p.SecurityArgs(
+			[]string{"--audit-log-path=/var/log/audit.log", "--audit-log-maxage=30"},
+			[]string{"--protect-kernel-defaults=true"},
+			[]string{"--cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"},
+		)
+		assert.Contains(t, result, "--apiserver-extra-args=audit-log-path=/var/log/audit.log")
+		assert.Contains(t, result, "--apiserver-extra-args=audit-log-maxage=30")
+		assert.Contains(t, result, "--etcd-extra-args=cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")
+	})
+
+	t.Run("kubelet flags ignored by kubeadm", func(t *testing.T) {
+		result := p.SecurityArgs(nil, []string{"--protect-kernel-defaults=true"}, nil)
+		assert.Empty(t, result)
+	})
+
+	t.Run("empty flags", func(t *testing.T) {
+		result := p.SecurityArgs(nil, nil, nil)
+		assert.Empty(t, result)
+	})
+
+	t.Run("parseFlag splits key=value", func(t *testing.T) {
+		result := p.SecurityArgs([]string{"--key=value"}, nil, nil)
+		assert.Contains(t, result, "--apiserver-extra-args=key=value")
+	})
+
+	t.Run("parseFlag without value", func(t *testing.T) {
+		result := p.SecurityArgs([]string{"--enable-admission-plugins"}, nil, nil)
+		assert.Contains(t, result, "--apiserver-extra-args=enable-admission-plugins=")
+	})
+}

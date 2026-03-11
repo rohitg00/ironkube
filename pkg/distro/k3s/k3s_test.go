@@ -155,3 +155,30 @@ func TestUninstallCmd(t *testing.T) {
 		assert.Contains(t, cmd, "k3s-agent-uninstall.sh")
 	})
 }
+
+func TestSecurityArgs(t *testing.T) {
+	p := New()
+
+	t.Run("all flag types", func(t *testing.T) {
+		result := p.SecurityArgs(
+			[]string{"--audit-log-path=/var/log/audit.log", "--audit-log-maxage=30"},
+			[]string{"--protect-kernel-defaults=true"},
+			[]string{"--cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"},
+		)
+		assert.Contains(t, result, "--kube-apiserver-arg=audit-log-path=/var/log/audit.log")
+		assert.Contains(t, result, "--kube-apiserver-arg=audit-log-maxage=30")
+		assert.Contains(t, result, "--kubelet-arg=protect-kernel-defaults=true")
+		assert.Contains(t, result, "--etcd-arg=cipher-suites=TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256")
+	})
+
+	t.Run("strips double dash prefix", func(t *testing.T) {
+		result := p.SecurityArgs([]string{"--some-flag=val"}, nil, nil)
+		assert.Contains(t, result, "--kube-apiserver-arg=some-flag=val")
+		assert.NotContains(t, result, "--kube-apiserver-arg=--some-flag")
+	})
+
+	t.Run("empty flags", func(t *testing.T) {
+		result := p.SecurityArgs(nil, nil, nil)
+		assert.Empty(t, result)
+	})
+}

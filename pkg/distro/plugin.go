@@ -11,4 +11,5 @@ type Plugin interface {
 	KubeconfigPath() string
 	UninstallCmd(role string) string
 	UpgradeCmd(version string) string
+	SecurityArgs(apiServerFlags, kubeletFlags, etcdFlags []string) string
 }

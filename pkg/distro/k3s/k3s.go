@@ -92,3 +92,17 @@ func (k *K3s) UninstallCmd(role string) string {
 func (k *K3s) UpgradeCmd(version string) string {
 	return fmt.Sprintf("curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION=%s sh -", version)
 }
+
+func (k *K3s) SecurityArgs(apiServerFlags, kubeletFlags, etcdFlags []string) string {
+	var sb strings.Builder
+	for _, f := range apiServerFlags {
+		sb.WriteString(fmt.Sprintf(" --kube-apiserver-arg=%s", strings.TrimPrefix(f, "--")))
+	}
+	for _, f := range kubeletFlags {
+		sb.WriteString(fmt.Sprintf(" --kubelet-arg=%s", strings.TrimPrefix(f, "--")))
+	}
+	for _, f := range etcdFlags {
+		sb.WriteString(fmt.Sprintf(" --etcd-arg=%s", strings.TrimPrefix(f, "--")))
+	}
+	return sb.String()
+}

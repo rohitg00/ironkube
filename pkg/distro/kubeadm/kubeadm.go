@@ -91,3 +91,25 @@ func (k *Kubeadm) UpgradeCmd(version string) string {
 	ver := strings.TrimPrefix(version, "v")
 	return fmt.Sprintf("apt-get install -y kubeadm=%s-* && kubeadm upgrade apply v%s", ver, ver)
 }
+
+func (k *Kubeadm) SecurityArgs(apiServerFlags, kubeletFlags, etcdFlags []string) string {
+	var sb strings.Builder
+	for _, f := range apiServerFlags {
+		key, val := parseFlag(f)
+		sb.WriteString(fmt.Sprintf(" --apiserver-extra-args=%s=%s", key, val))
+	}
+	for _, f := range etcdFlags {
+		key, val := parseFlag(f)
+		sb.WriteString(fmt.Sprintf(" --etcd-extra-args=%s=%s", key, val))
+	}
+	return sb.String()
+}
+
+func parseFlag(flag string) (string, string) {
+	flag = strings.TrimPrefix(flag, "--")
+	parts := strings.SplitN(flag, "=", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	}
+	return flag, ""
+}

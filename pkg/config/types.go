@@ -18,6 +18,13 @@ type ClusterSpec struct {
 	Workers      []NodePool   `yaml:"workers" json:"workers"`
 	Security     Security     `yaml:"security" json:"security"`
 	Networking   Networking   `yaml:"networking" json:"networking"`
+	Addons       Addons       `yaml:"addons" json:"addons"`
+}
+
+type Addons struct {
+	CNI         string `yaml:"cni" json:"cni"`
+	CertManager bool   `yaml:"certManager" json:"certManager"`
+	Monitoring  bool   `yaml:"monitoring" json:"monitoring"`
 }
 
 type ControlPlane struct {

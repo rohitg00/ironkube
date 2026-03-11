@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	Version = "0.0.0"
+	Version = "0.1.0"
 	Commit  = "dev"
 )
 
@@ -19,6 +19,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewVersionCmd())
 	cmd.AddCommand(NewInitCmd())
 	cmd.AddCommand(NewHealthCmd())
+	cmd.AddCommand(NewDestroyCmd())
 
 	return cmd
 }

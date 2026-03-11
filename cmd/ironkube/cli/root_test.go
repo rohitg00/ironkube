@@ -45,14 +45,29 @@ func TestHealthCommandExists(t *testing.T) {
 	assert.Equal(t, "health", healthCmd.Use)
 }
 
-func TestHealthCommandOutput(t *testing.T) {
+func TestHealthCommandRequiresConfig(t *testing.T) {
 	cmd := NewRootCmd()
 	buf := new(bytes.Buffer)
-	cmd.SetOut(buf)
-	cmd.SetArgs([]string{"health"})
+	cmd.SetErr(buf)
+	cmd.SetArgs([]string{"health", "--config", "/nonexistent.yaml"})
 	err := cmd.Execute()
+	assert.Error(t, err)
+}
+
+func TestDestroyCommandExists(t *testing.T) {
+	cmd := NewRootCmd()
+	destroyCmd, _, err := cmd.Find([]string{"destroy"})
 	require.NoError(t, err)
-	assert.Contains(t, buf.String(), "Health check")
+	assert.Equal(t, "destroy", destroyCmd.Use)
+}
+
+func TestDestroyCommandRequiresConfig(t *testing.T) {
+	cmd := NewRootCmd()
+	buf := new(bytes.Buffer)
+	cmd.SetErr(buf)
+	cmd.SetArgs([]string{"destroy", "--config", "/nonexistent.yaml"})
+	err := cmd.Execute()
+	assert.Error(t, err)
 }
 
 func TestInitDryRunWithValidConfig(t *testing.T) {

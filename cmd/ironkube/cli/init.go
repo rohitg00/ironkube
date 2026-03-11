@@ -38,12 +38,18 @@ func NewInitCmd() *cobra.Command {
 				return nil
 			}
 
-			pipeline := engine.NewPipeline(
+			pipelinePhases := []engine.Phase{
 				&phases.ValidatePhase{Config: cfg},
 				&phases.ConnectPhase{Config: cfg},
 				&phases.BootstrapPhase{Config: cfg},
 				&phases.FetchKubeconfigPhase{Config: cfg, OutputPath: kubeconfigPath},
-			)
+			}
+
+			if cfg.Spec.Addons.CNI != "" || cfg.Spec.Addons.CertManager || cfg.Spec.Addons.Monitoring {
+				pipelinePhases = append(pipelinePhases, &phases.AddonsPhase{Config: cfg})
+			}
+
+			pipeline := engine.NewPipeline(pipelinePhases...)
 
 			if err := pipeline.Execute(cmd.Context()); err != nil {
 				return err
