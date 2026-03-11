@@ -1,0 +1,31 @@
+apiVersion: ironkube.io/v1alpha1
+kind: Cluster
+metadata:
+  name: production-cluster
+spec:
+  distro: kubeadm
+  version: v1.34.3
+  controlPlane:
+    replicas: 3
+    nodes:
+      - host: 10.0.0.1
+        user: root
+      - host: 10.0.0.2
+        user: root
+      - host: 10.0.0.3
+        user: root
+  workers:
+    - name: general
+      nodes:
+        - host: 10.0.0.11
+          user: root
+        - host: 10.0.0.12
+          user: root
+        - host: 10.0.0.13
+          user: root
+  security:
+    profile: cis-hardened
+  networking:
+    cni: cilium
+    podCIDR: 10.244.0.0/16
+    serviceCIDR: 10.96.0.0/12
