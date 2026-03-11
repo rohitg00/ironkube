@@ -25,15 +25,13 @@ func NewInitCmd() *cobra.Command {
 				return fmt.Errorf("loading config: %w", err)
 			}
 
-			validatePipeline := engine.NewPipeline(
-				&phases.ValidatePhase{Config: cfg},
-			)
-
-			if err := validatePipeline.Execute(cmd.Context()); err != nil {
-				return err
-			}
-
 			if dryRun {
+				validatePipeline := engine.NewPipeline(
+					&phases.ValidatePhase{Config: cfg},
+				)
+				if err := validatePipeline.Execute(cmd.Context()); err != nil {
+					return err
+				}
 				fmt.Fprintf(cmd.OutOrStdout(), "Dry run: cluster %q validated (distro: %s, control-plane: %d, workers: %d)\n",
 					cfg.Metadata.Name, cfg.Spec.Distro,
 					len(cfg.Spec.ControlPlane.Nodes), workerCount(cfg))

@@ -75,9 +75,11 @@ func TestFullK3sBootstrap(t *testing.T) {
 
 	tmpKubeconfig := t.TempDir() + "/kubeconfig"
 
+	connectPhase := &phases.ConnectPhase{Config: cfg}
+
 	pipeline := engine.NewPipeline(
 		&phases.ValidatePhase{Config: cfg},
-		&phases.ConnectPhase{Config: cfg},
+		connectPhase,
 		&phases.BootstrapPhase{Config: cfg},
 		&phases.FetchKubeconfigPhase{Config: cfg, OutputPath: tmpKubeconfig},
 	)
@@ -86,6 +88,15 @@ func TestFullK3sBootstrap(t *testing.T) {
 	defer cancel()
 
 	err = pipeline.Execute(ctx)
+
+	t.Cleanup(func() {
+		if v, ok := pipeline.State().Get("executor"); ok {
+			if exec, ok := v.(*ssh.Executor); ok {
+				exec.Close()
+			}
+		}
+	})
+
 	require.NoError(t, err, "bootstrap pipeline should succeed")
 
 	completedPhases := pipeline.CompletedPhases()
@@ -106,7 +117,10 @@ func TestFullK3sBootstrap(t *testing.T) {
 
 	out, err := exec.RunOnHost("127.0.0.1", "k3s kubectl get nodes --no-headers")
 	require.NoError(t, err)
-	assert.Contains(t, out, "Ready")
+	assert.NotContains(t, out, "NotReady")
+	fields := strings.Fields(strings.TrimSpace(out))
+	require.True(t, len(fields) >= 2, "expected kubectl output with at least 2 fields")
+	assert.Equal(t, "Ready", fields[1])
 
 	out, err = exec.RunOnHost("127.0.0.1", "k3s kubectl get pods -A --no-headers")
 	require.NoError(t, err)

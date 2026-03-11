@@ -41,6 +41,7 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 
 	out, err := exec.RunOnHost(firstNode.Host, installCmd)
 	if err != nil {
+		p.Cleanup(ctx, state)
 		return fmt.Errorf("failed to bootstrap first control plane node %s: %w\nOutput: %s", firstNode.Host, err, out)
 	}
 
