@@ -4,6 +4,7 @@ import "context"
 
 type Pipeline struct {
 	phases          []Phase
+	hooks           []Hook
 	state           *State
 	completedPhases []string
 }
@@ -15,6 +16,11 @@ func NewPipeline(phases ...Phase) *Pipeline {
 	}
 }
 
+func (p *Pipeline) WithHooks(hooks ...Hook) *Pipeline {
+	p.hooks = append(p.hooks, hooks...)
+	return p
+}
+
 func (p *Pipeline) Execute(ctx context.Context) error {
 	for _, phase := range p.phases {
 		select {
@@ -24,13 +30,51 @@ func (p *Pipeline) Execute(ctx context.Context) error {
 		default:
 		}
 
-		if err := phase.Run(ctx, p.state); err != nil {
+		if err := p.runPrePhaseHooks(ctx, phase.Name()); err != nil {
 			p.runCleanups(ctx)
 			return err
 		}
+
+		phaseErr := phase.Run(ctx, p.state)
+
+		p.runPostPhaseHooks(ctx, phase.Name(), phaseErr)
+
+		if phaseErr != nil {
+			p.runErrorHooks(ctx, phase.Name(), phaseErr)
+			p.runCleanups(ctx)
+			return phaseErr
+		}
+
 		p.completedPhases = append(p.completedPhases, phase.Name())
 	}
 	return nil
+}
+
+func (p *Pipeline) runPrePhaseHooks(ctx context.Context, phaseName string) error {
+	for _, h := range p.hooks {
+		if pre, ok := h.(PrePhaseHook); ok {
+			if err := pre.PrePhase(ctx, phaseName, p.state); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (p *Pipeline) runPostPhaseHooks(ctx context.Context, phaseName string, phaseErr error) {
+	for _, h := range p.hooks {
+		if post, ok := h.(PostPhaseHook); ok {
+			_ = post.PostPhase(ctx, phaseName, p.state, phaseErr)
+		}
+	}
+}
+
+func (p *Pipeline) runErrorHooks(ctx context.Context, phaseName string, err error) {
+	for _, h := range p.hooks {
+		if errHook, ok := h.(ErrorHook); ok {
+			_ = errHook.OnError(ctx, phaseName, p.state, err)
+		}
+	}
 }
 
 func (p *Pipeline) runCleanups(ctx context.Context) {
