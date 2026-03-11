@@ -7,6 +7,10 @@ import (
 )
 
 func Validate(cfg *ClusterConfig) error {
+	if cfg == nil {
+		return fmt.Errorf("config is required")
+	}
+
 	var errs []string
 
 	if cfg.Metadata.Name == "" {

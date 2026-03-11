@@ -3,6 +3,7 @@ package backup
 import (
 	"context"
 	"fmt"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -77,7 +78,9 @@ func (m *Manager) Backup(ctx context.Context, machine provider.Machine, outputDi
 
 		stateName := fmt.Sprintf("%s-state-%s.json", prefix, timestamp.Format("20060102-150405"))
 		statePath := filepath.Join(outputDir, stateName)
-		_ = stateData
+		if err := os.WriteFile(statePath, stateData, 0600); err != nil {
+			return nil, fmt.Errorf("writing state backup: %w", err)
+		}
 		result.StatePath = statePath
 	}
 

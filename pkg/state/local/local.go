@@ -24,11 +24,23 @@ func New(dir string) *LocalBackend {
 	}
 }
 
-func (b *LocalBackend) filePath(name string) string {
-	return filepath.Join(b.dir, name+".json")
+func (b *LocalBackend) filePath(name string) (string, error) {
+	if name == "" || strings.ContainsAny(name, "/\\..") {
+		return "", fmt.Errorf("invalid cluster name: %q", name)
+	}
+	clean := filepath.Clean(name)
+	if clean != name || filepath.IsAbs(name) {
+		return "", fmt.Errorf("invalid cluster name: %q", name)
+	}
+	return filepath.Join(b.dir, name+".json"), nil
 }
 
 func (b *LocalBackend) Save(s *state.ClusterState) error {
+	fp, err := b.filePath(s.Metadata.Name)
+	if err != nil {
+		return err
+	}
+
 	if err := os.MkdirAll(b.dir, 0700); err != nil {
 		return fmt.Errorf("creating state directory: %w", err)
 	}
@@ -38,7 +50,7 @@ func (b *LocalBackend) Save(s *state.ClusterState) error {
 		return fmt.Errorf("marshaling state: %w", err)
 	}
 
-	if err := os.WriteFile(b.filePath(s.Metadata.Name), data, 0600); err != nil {
+	if err := os.WriteFile(fp, data, 0600); err != nil {
 		return fmt.Errorf("writing state file: %w", err)
 	}
 
@@ -46,7 +58,12 @@ func (b *LocalBackend) Save(s *state.ClusterState) error {
 }
 
 func (b *LocalBackend) Load(clusterName string) (*state.ClusterState, error) {
-	data, err := os.ReadFile(b.filePath(clusterName))
+	fp, err := b.filePath(clusterName)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := os.ReadFile(fp)
 	if err != nil {
 		return nil, fmt.Errorf("reading state file: %w", err)
 	}
@@ -100,7 +117,12 @@ func (b *LocalBackend) List() ([]string, error) {
 }
 
 func (b *LocalBackend) Delete(clusterName string) error {
-	if err := os.Remove(b.filePath(clusterName)); err != nil {
+	fp, err := b.filePath(clusterName)
+	if err != nil {
+		return err
+	}
+
+	if err := os.Remove(fp); err != nil {
 		return fmt.Errorf("deleting state file: %w", err)
 	}
 	return nil

@@ -96,7 +96,12 @@ func newStateInspectCmd() *cobra.Command {
 				return fmt.Errorf("loading state for cluster %q: %w", name, err)
 			}
 
-			data, err := json.MarshalIndent(clusterState, "", "  ")
+			redacted := *clusterState
+			if len(redacted.Kubeconfig) > 0 {
+				redacted.Kubeconfig = []byte("[REDACTED]")
+			}
+
+			data, err := json.MarshalIndent(redacted, "", "  ")
 			if err != nil {
 				return fmt.Errorf("marshaling state: %w", err)
 			}

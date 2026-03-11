@@ -72,30 +72,58 @@ func NewApplyCmd() *cobra.Command {
 			fmt.Fprintln(w, "\nApplying changes...")
 			for _, action := range result.Actions {
 				fmt.Fprintf(w, "  Executing: %s\n", action.Description)
+
+				switch action.Type {
+				case engine.ActionCreateMachine:
+					if action.Machine != nil {
+						clusterState.SetMachine(action.Machine.Host, state.MachineState{
+							ID:         action.Machine.Host,
+							Host:       action.Machine.Host,
+							Role:       action.Machine.Role,
+							K8sVersion: cfg.Spec.Version,
+							Status:     "ready",
+							JoinedAt:   time.Now(),
+						})
+					}
+				case engine.ActionDeleteMachine:
+					if action.Machine != nil {
+						delete(clusterState.Machines, action.Machine.Host)
+					}
+				case engine.ActionUpgradeVersion:
+					if action.Machine != nil {
+						if m, ok := clusterState.Machines[action.Machine.Host]; ok {
+							m.K8sVersion = action.ToVersion
+							m.Status = "ready"
+							clusterState.Machines[action.Machine.Host] = m
+						}
+					}
+				case engine.ActionInstallAddon:
+					if action.Addon != nil {
+						clusterState.SetAddon(action.Addon.Name, state.AddonState{
+							Name:      action.Addon.Name,
+							Version:   action.Addon.Version,
+							Installed: true,
+							Ready:     true,
+						})
+					}
+				case engine.ActionUpgradeAddon:
+					if action.Addon != nil {
+						clusterState.SetAddon(action.Addon.Name, state.AddonState{
+							Name:      action.Addon.Name,
+							Version:   action.Addon.Version,
+							Installed: true,
+							Ready:     true,
+						})
+					}
+				case engine.ActionRemoveAddon:
+					if action.Addon != nil {
+						delete(clusterState.Addons, action.Addon.Name)
+					}
+				}
 			}
 
 			clusterState.Metadata.UpdatedAt = time.Now()
 			clusterState.Metadata.Version = cfg.Spec.Version
-
-			for _, m := range desired.Machines {
-				clusterState.SetMachine(m.Host, state.MachineState{
-					ID:         m.Host,
-					Host:       m.Host,
-					Role:       m.Role,
-					K8sVersion: cfg.Spec.Version,
-					Status:     "ready",
-					JoinedAt:   time.Now(),
-				})
-			}
-
-			for _, a := range desired.Addons {
-				clusterState.SetAddon(a.Name, state.AddonState{
-					Name:      a.Name,
-					Version:   a.Version,
-					Installed: true,
-					Ready:     true,
-				})
-			}
 
 			clusterState.RecordOperation(state.OperationRecord{
 				Type:       state.OpApply,

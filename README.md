@@ -215,18 +215,16 @@ metadata:
   name: my-fleet
 spec:
   clusters:
-    - name: us-east
-      configPath: ./clusters/us-east.yaml
-      region: us-east-1
-      tags:
+    - path: ./clusters/us-east.yaml
+      labels:
+        region: us-east-1
         env: production
-    - name: eu-west
-      configPath: ./clusters/eu-west.yaml
-      region: eu-west-1
-      tags:
+    - path: ./clusters/eu-west.yaml
+      labels:
+        region: eu-west-1
         env: production
   policies:
-    maxConcurrent: 1
+    maxConcurrentUpgrades: 1
     upgradeWindow: "02:00-06:00"
 ```
 
@@ -277,7 +275,7 @@ make coverage    # Generate coverage report
 
 ## Examples
 
-- [Single node k3s](examples/single-node-k3s.yaml)
+- [Single-node k3s](examples/single-node-k3s.yaml)
 - [HA kubeadm with CIS hardening](examples/ha-kubeadm.yaml)
 
 ## License

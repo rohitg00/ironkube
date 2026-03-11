@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/rohitg00/ironkube/pkg/provider"
 )
@@ -109,6 +110,18 @@ func (l *Loader) ExtractArchive(archivePath, outputDir string) error {
 		}
 
 		target := filepath.Join(outputDir, header.Name)
+
+		absTarget, err := filepath.Abs(target)
+		if err != nil {
+			return fmt.Errorf("resolving path %s: %w", target, err)
+		}
+		absOutputDir, err := filepath.Abs(outputDir)
+		if err != nil {
+			return fmt.Errorf("resolving output dir: %w", err)
+		}
+		if !strings.HasPrefix(absTarget, absOutputDir+string(filepath.Separator)) && absTarget != absOutputDir {
+			return fmt.Errorf("path traversal detected: %s escapes %s", header.Name, outputDir)
+		}
 
 		switch header.Typeflag {
 		case tar.TypeDir:

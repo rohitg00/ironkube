@@ -192,6 +192,12 @@ func TestValidateTableDriven(t *testing.T) {
 	}
 }
 
+func TestValidateNilConfig(t *testing.T) {
+	err := Validate(nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "config is required")
+}
+
 func TestValidateMultipleErrors(t *testing.T) {
 	cfg := &ClusterConfig{
 		Spec: ClusterSpec{

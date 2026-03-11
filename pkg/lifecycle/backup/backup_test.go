@@ -69,12 +69,13 @@ func TestBackupIncludesStateWhenOptSet(t *testing.T) {
 	state := &mockStateExporter{data: []byte(`{"cluster":"test"}`)}
 	mgr := New(etcd, state)
 
-	result, err := mgr.Backup(context.Background(), testMachine(), "/backups", BackupOpts{IncludeState: true})
+	dir := t.TempDir()
+	result, err := mgr.Backup(context.Background(), testMachine(), dir, BackupOpts{IncludeState: true})
 	require.NoError(t, err)
 
 	assert.NotEmpty(t, result.StatePath)
-	assert.True(t, strings.HasPrefix(result.StatePath, "/backups/etcd-snapshot-state-"))
 	assert.True(t, strings.HasSuffix(result.StatePath, ".json"))
+	assert.Contains(t, result.StatePath, "etcd-snapshot-state-")
 }
 
 func TestBackupWithoutStateExport(t *testing.T) {
