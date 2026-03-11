@@ -1,22 +1,22 @@
 # IronKube
 
-Unified Kubernetes lifecycle management. Bootstrap production-hardened clusters across distributions with a single declarative config.
+Unified Kubernetes lifecycle management. Bootstrap production-hardened clusters across distributions with a single binary and one declarative config.
 
-## Why IronKube
+## Features
 
-Every K8s tool solves 1-3 problems. k3sup is locked to k3s. k0sctl is locked to k0s. kubeadm has no fleet management. CAPI needs a management cluster. Nobody does distribution-agnostic bootstrapping with security built in from day zero.
+- **Distribution-agnostic** — k3s, kubeadm today; Talos, k0s planned
+- **Security at bootstrap** — CIS-hardened profiles applied at creation time
+- **No management cluster** — single Go binary, SSH-based
+- **Phase-based engine** — validate, connect, bootstrap, kubeconfig fetch
+- **Declarative config** — one YAML file describes your entire cluster
 
-IronKube fixes this:
-- **One config, any distro** — k3s, kubeadm (Talos, k0s coming)
-- **Security at bootstrap** — CIS-hardened profiles applied at creation, not bolted on after
-- **No management cluster** — standalone Go binary, state in Git/S3
-- **Full lifecycle** — bootstrap, upgrade, health checks, fleet (planned)
-
-## Quick Start
+## Install
 
 ```bash
 go install github.com/rohitg00/ironkube/cmd/ironkube@latest
 ```
+
+## Usage
 
 Create `ironkube.yaml`:
 
@@ -34,38 +34,22 @@ spec:
       - host: 10.0.0.1
         user: root
   security:
-    profile: cis-hardened
+    profile: minimal
   networking:
-    cni: cilium
-    podCIDR: 10.42.0.0/16
-    serviceCIDR: 10.43.0.0/16
+    cni: flannel
 ```
 
 Bootstrap:
 
 ```bash
-ironkube init --config ironkube.yaml
-
-ironkube init --config ironkube.yaml --dry-run
+ironkube init -c ironkube.yaml
 ```
 
-## Supported Distributions
+Validate without bootstrapping:
 
-| Distro | Bootstrap | Join | HA | Upgrade |
-|--------|-----------|------|----|---------|
-| k3s | Yes | Yes | Yes (embedded etcd) | Planned |
-| kubeadm | Yes | Yes | Yes (stacked etcd) | Planned |
-| Talos | Planned | | | |
-| k0s | Planned | | | |
-
-## Security Profiles
-
-| Profile | Description | CIS Checks |
-|---------|-------------|-----------|
-| `minimal` | Basic RBAC + NodeRestriction, PSA baseline | ~10% |
-| `cis-hardened` | Full CIS Benchmark hardening at bootstrap | ~52% |
-
-CIS-hardened applies: anonymous auth disabled, RBAC+Node authorization, audit logging, TLS 1.2 minimum, etcd mutual TLS, kubelet webhook auth, kernel defaults protection, Pod Security restricted, and more.
+```bash
+ironkube init -c ironkube.yaml --dry-run
+```
 
 ## Config Reference
 
@@ -93,48 +77,51 @@ spec:
     profile: minimal | cis-hardened  # (default: minimal)
   networking:
     cni: flannel | cilium | calico   # (default: flannel)
-    podCIDR: 10.42.0.0/16           # (default: 10.42.0.0/16)
-    serviceCIDR: 10.43.0.0/16       # (default: 10.43.0.0/16)
+    podCIDR: 10.42.0.0/16
+    serviceCIDR: 10.43.0.0/16
 ```
+
+## Security Profiles
+
+| Profile | Description |
+|---------|-------------|
+| `minimal` | RBAC + NodeRestriction, PSA baseline |
+| `cis-hardened` | Anonymous auth disabled, audit logging, TLS 1.2+, etcd mutual TLS, kubelet webhook auth, PSA restricted |
 
 ## Examples
 
-- [Single node k3s](examples/single-node-k3s.yaml) — simplest setup
-- [HA kubeadm with CIS hardening](examples/ha-kubeadm.yaml) — production-grade
-
-## Architecture
-
-See [docs/architecture.md](docs/architecture.md) for full design.
-
-```
-ironkube init --config ironkube.yaml
-  │
-  ├─ Load config → defaults → validate
-  ├─ Resolve distro plugin + security profile
-  ├─ SSH connect to all nodes
-  ├─ Bootstrap control plane
-  ├─ Join workers
-  ├─ Fetch kubeconfig
-  └─ Health checks
-```
+- [Single node k3s](examples/single-node-k3s.yaml)
+- [HA kubeadm with CIS hardening](examples/ha-kubeadm.yaml)
 
 ## Development
 
 ```bash
-make build        # build binary
-make test         # run all tests (119 tests)
-make lint         # golangci-lint
-make clean        # remove build artifacts
+make build
+make test
+make lint
 ```
+
+## Architecture
+
+```
+ironkube init -c ironkube.yaml
+  │
+  ├─ ValidatePhase    → config + distro + security validation
+  ├─ ConnectPhase     → SSH to all nodes (parallel)
+  ├─ BootstrapPhase   → install distro, wait for Ready, join nodes
+  └─ KubeconfigPhase  → fetch, rewrite server IP, merge locally
+```
+
+See [docs/architecture.md](docs/architecture.md) for details.
 
 ## Roadmap
 
-- [x] **v0.0.0** — Config, engine, SSH, k3s+kubeadm, security profiles, health checks
-- [ ] **v0.1.0** — Day 1 addons (CNI presets, observability, cert-manager, Gateway API)
-- [ ] **v0.2.0** — Rolling upgrades with API deprecation pre-flight
-- [ ] **v0.3.0** — Airgap packaging (OCI artifacts, registry bootstrap)
-- [ ] **v0.4.0** — Fleet management (pull-based agent, no management cluster)
-- [ ] **v0.5.0** — GPU/AI workloads + cost estimation
+- [x] v0.0.0 — Config, engine, SSH, k3s + kubeadm, security profiles, bootstrap pipeline
+- [ ] v0.1.0 — Day 1 addons (CNI presets, observability, cert-manager)
+- [ ] v0.2.0 — Rolling upgrades with API deprecation pre-flight
+- [ ] v0.3.0 — Airgap packaging (OCI artifacts)
+- [ ] v0.4.0 — Fleet management (no management cluster)
+- [ ] v0.5.0 — GPU/AI workloads + cost estimation
 
 ## License
 
