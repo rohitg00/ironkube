@@ -28,6 +28,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(NewUpgradeCmd())
 	cmd.AddCommand(NewBackupCmd())
 	cmd.AddCommand(NewFleetCmd())
+	cmd.AddCommand(NewAirgapCmd())
 
 	return cmd
 }
