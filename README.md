@@ -92,7 +92,7 @@ ironkube apply -c cluster.yaml
 
 ## CLI commands
 
-```
+```text
 ironkube apply      -c <config>              Create or update a cluster
 ironkube destroy    --name <cluster> --yes   Tear down a cluster
 ironkube status     --name <cluster>         Show cluster state
@@ -238,7 +238,7 @@ spec:
 
 ## Architecture
 
-```
+```text
 ironkube apply -c cluster.yaml
   │
   ├─ Load Config (v1alpha2)
@@ -254,7 +254,7 @@ ironkube apply -c cluster.yaml
   └─ Save State
 ```
 
-```
+```text
 Provider Model (3+1):
 
   InfraProvider          BootstrapProvider       ControlPlaneProvider    AddonProvider

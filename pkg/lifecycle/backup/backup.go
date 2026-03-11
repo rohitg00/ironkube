@@ -22,6 +22,7 @@ type StateExporter interface {
 type BackupOpts struct {
 	IncludeState bool
 	Prefix       string
+	ClusterName  string
 }
 
 type RestoreOpts struct {
@@ -71,7 +72,11 @@ func (m *Manager) Backup(ctx context.Context, machine provider.Machine, outputDi
 	}
 
 	if opts.IncludeState {
-		stateData, err := m.state.ExportState(ctx, machine.ID)
+		clusterName := opts.ClusterName
+		if clusterName == "" {
+			clusterName = machine.ID
+		}
+		stateData, err := m.state.ExportState(ctx, clusterName)
 		if err != nil {
 			return nil, fmt.Errorf("exporting state: %w", err)
 		}

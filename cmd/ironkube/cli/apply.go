@@ -70,6 +70,7 @@ func NewApplyCmd() *cobra.Command {
 			}
 
 			fmt.Fprintln(w, "\nApplying changes...")
+			startTime := time.Now()
 			for _, action := range result.Actions {
 				fmt.Fprintf(w, "  Executing: %s\n", action.Description)
 
@@ -128,7 +129,7 @@ func NewApplyCmd() *cobra.Command {
 			clusterState.RecordOperation(state.OperationRecord{
 				Type:       state.OpApply,
 				Status:     state.OpStatusSuccess,
-				StartedAt:  time.Now(),
+				StartedAt:  startTime,
 				FinishedAt: time.Now(),
 				Version:    cfg.Spec.Version,
 			})

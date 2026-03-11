@@ -72,7 +72,7 @@ func setupBundleDir(t *testing.T) (string, *BundleManifest) {
 		Arch:      "amd64",
 		CreatedAt: time.Now(),
 		Binaries:  []string{"k3s"},
-		Images:    []string{"nginx:latest"},
+		Images:    []string{"nginx.tar"},
 		Charts:    []string{"ingress-4.0.0.tgz"},
 	}
 

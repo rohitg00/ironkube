@@ -50,12 +50,22 @@ func (l *Loader) LoadManifest(bundleDir string) (*BundleManifest, error) {
 }
 
 func (l *Loader) LoadBundle(ctx context.Context, machine provider.Machine, bundleDir string) error {
+	if l.binInstaller == nil {
+		return fmt.Errorf("binary installer is required")
+	}
+	if l.imgLoader == nil {
+		return fmt.Errorf("image loader is required")
+	}
+
 	manifest, err := l.LoadManifest(bundleDir)
 	if err != nil {
 		return fmt.Errorf("loading manifest: %w", err)
 	}
 
 	for _, binName := range manifest.Binaries {
+		if strings.ContainsAny(binName, "/\\") || binName == ".." || binName == "." {
+			return fmt.Errorf("invalid binary name: %q", binName)
+		}
 		binPath := filepath.Join(bundleDir, "binaries", binName)
 		data, err := os.ReadFile(binPath)
 		if err != nil {
@@ -67,18 +77,13 @@ func (l *Loader) LoadBundle(ctx context.Context, machine provider.Machine, bundl
 		}
 	}
 
-	imagesDir := filepath.Join(bundleDir, "images")
-	entries, err := os.ReadDir(imagesDir)
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("reading images directory: %w", err)
-	}
-	for _, entry := range entries {
-		if entry.IsDir() {
-			continue
+	for _, imageName := range manifest.Images {
+		if strings.ContainsAny(imageName, "/\\") || imageName == ".." || imageName == "." {
+			return fmt.Errorf("invalid image name: %q", imageName)
 		}
-		archivePath := filepath.Join(imagesDir, entry.Name())
+		archivePath := filepath.Join(bundleDir, "images", imageName)
 		if err := l.imgLoader.Load(ctx, machine, archivePath); err != nil {
-			return fmt.Errorf("loading image %s: %w", entry.Name(), err)
+			return fmt.Errorf("loading image %s: %w", imageName, err)
 		}
 	}
 
