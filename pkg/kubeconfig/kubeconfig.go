@@ -112,32 +112,44 @@ func Merge(existingPath string, newData []byte) error {
 		return fmt.Errorf("failed to parse existing kubeconfig: %w", err)
 	}
 
-	clusterNames := make(map[string]bool)
-	for _, c := range existingCfg.Clusters {
-		clusterNames[c.Name] = true
-	}
 	for _, c := range newCfg.Clusters {
-		if !clusterNames[c.Name] {
+		replaced := false
+		for i, existing := range existingCfg.Clusters {
+			if existing.Name == c.Name {
+				existingCfg.Clusters[i] = c
+				replaced = true
+				break
+			}
+		}
+		if !replaced {
 			existingCfg.Clusters = append(existingCfg.Clusters, c)
 		}
 	}
 
-	contextNames := make(map[string]bool)
-	for _, c := range existingCfg.Contexts {
-		contextNames[c.Name] = true
-	}
 	for _, c := range newCfg.Contexts {
-		if !contextNames[c.Name] {
+		replaced := false
+		for i, existing := range existingCfg.Contexts {
+			if existing.Name == c.Name {
+				existingCfg.Contexts[i] = c
+				replaced = true
+				break
+			}
+		}
+		if !replaced {
 			existingCfg.Contexts = append(existingCfg.Contexts, c)
 		}
 	}
 
-	userNames := make(map[string]bool)
-	for _, u := range existingCfg.Users {
-		userNames[u.Name] = true
-	}
 	for _, u := range newCfg.Users {
-		if !userNames[u.Name] {
+		replaced := false
+		for i, existing := range existingCfg.Users {
+			if existing.Name == u.Name {
+				existingCfg.Users[i] = u
+				replaced = true
+				break
+			}
+		}
+		if !replaced {
 			existingCfg.Users = append(existingCfg.Users, u)
 		}
 	}
