@@ -4,14 +4,16 @@
 
 <p align="center">
   <a href="https://github.com/rohitg00/ironkube/actions"><img src="https://github.com/rohitg00/ironkube/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://goreportcard.com/report/github.com/rohitg00/ironkube"><img src="https://goreportcard.com/badge/github.com/rohitg00/ironkube" alt="Go Report Card"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License"></a>
   <a href="https://pkg.go.dev/github.com/rohitg00/ironkube"><img src="https://pkg.go.dev/badge/github.com/rohitg00/ironkube.svg" alt="Go Reference"></a>
+  <img src="https://img.shields.io/badge/tests-863-brightgreen" alt="Tests">
+  <img src="https://img.shields.io/badge/Go-1.26-00ADD8?logo=go&logoColor=white" alt="Go 1.26">
 </p>
 
----
-
-Unified Kubernetes lifecycle management — Day 0 through Day 2 — with no management cluster. One binary, one config, any distro, any infrastructure.
+<p align="center">
+  Unified Kubernetes lifecycle management — Day 0 through Day 2 — with no management cluster.<br>
+  One binary, one config, any distro, any infrastructure.
+</p>
 
 <p align="center">
   <img src="assets/lifecycle.svg" alt="IronKube Lifecycle" width="900">
