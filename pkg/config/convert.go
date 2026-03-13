@@ -18,6 +18,7 @@ func FromV1Alpha2(v2 *v1alpha2.ClusterConfig) *ClusterConfig {
 				Profile: v2.Spec.Security.Profile,
 			},
 			Networking: Networking{
+				CNI:     defaultCNI(v2.Spec.Distro),
 				PodCIDR: v2.Spec.Networking.PodCIDR,
 				SvcCIDR: v2.Spec.Networking.ServiceCIDR,
 			},
@@ -43,6 +44,13 @@ func FromV1Alpha2(v2 *v1alpha2.ClusterConfig) *ClusterConfig {
 	}
 
 	return cfg
+}
+
+func defaultCNI(distro string) string {
+	if distro == "k3s" {
+		return "flannel"
+	}
+	return "calico"
 }
 
 func convertNodes(v2Nodes []v1alpha2.Node, globalKeyPath string) []Node {

@@ -7,8 +7,10 @@ import (
 	"path/filepath"
 	"time"
 
+	pkgconfig "github.com/rohitg00/ironkube/pkg/config"
 	"github.com/rohitg00/ironkube/pkg/config/v1alpha2"
 	"github.com/rohitg00/ironkube/pkg/engine"
+	"github.com/rohitg00/ironkube/pkg/phases"
 	"github.com/rohitg00/ironkube/pkg/provider"
 	"github.com/rohitg00/ironkube/pkg/state"
 	"github.com/rohitg00/ironkube/pkg/state/local"
@@ -69,8 +71,44 @@ func NewApplyCmd() *cobra.Command {
 				return nil
 			}
 
+			hasCreateActions := false
+			for _, action := range result.Actions {
+				if action.Type == engine.ActionCreateMachine {
+					hasCreateActions = true
+					break
+				}
+			}
+
 			fmt.Fprintln(w, "\nApplying changes...")
 			startTime := time.Now()
+
+			if hasCreateActions && len(clusterState.Machines) == 0 {
+				v1Cfg := pkgconfig.FromV1Alpha2(cfg)
+				kubeconfigPath := filepath.Join(os.TempDir(), fmt.Sprintf("ironkube-%s-kubeconfig", cfg.Metadata.Name))
+
+				pipeline := engine.NewPipeline(
+					&phases.ValidatePhase{Config: v1Cfg},
+					&phases.ConnectPhase{Config: v1Cfg},
+					&phases.BootstrapPhase{Config: v1Cfg},
+					&phases.FetchKubeconfigPhase{Config: v1Cfg, OutputPath: kubeconfigPath},
+				)
+
+				if err := pipeline.Execute(cmd.Context()); err != nil {
+					clusterState.RecordOperation(state.OperationRecord{
+						Type:       state.OpApply,
+						Status:     state.OpStatusFailed,
+						StartedAt:  startTime,
+						FinishedAt: time.Now(),
+						Version:    cfg.Spec.Version,
+						Message:    err.Error(),
+					})
+					_ = backend.Save(clusterState)
+					return fmt.Errorf("bootstrap failed: %w", err)
+				}
+
+				fmt.Fprintf(w, "  Bootstrap complete. Kubeconfig: %s\n", kubeconfigPath)
+			}
+
 			for _, action := range result.Actions {
 				fmt.Fprintf(w, "  Executing: %s\n", action.Description)
 
