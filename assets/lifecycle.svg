@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 200">
+  <defs>
+    <linearGradient id="l-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="day0" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#172554"/>
+    </linearGradient>
+    <linearGradient id="day1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3b2f1e"/>
+      <stop offset="100%" stop-color="#2a1f0e"/>
+    </linearGradient>
+    <linearGradient id="day2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a3328"/>
+      <stop offset="100%" stop-color="#0f2418"/>
+    </linearGradient>
+    <marker id="la" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="200" rx="10" fill="url(#l-bg)"/>
+
+  <rect x="30" y="24" width="280" height="152" rx="10" fill="url(#day0)" stroke="#3b82f6" stroke-width="1.5"/>
+  <rect x="30" y="24" width="280" height="34" rx="10" fill="#3b82f6" opacity="0.15"/>
+  <text x="50" y="47" font-family="'Segoe UI', Arial, sans-serif" font-size="15" font-weight="bold" fill="#93c5fd">Day 0 — Provision &amp; Bootstrap</text>
+  <text x="50" y="78" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Infrastructure provisioning (SSH/Cloud/Docker)</text>
+  <text x="50" y="98" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Cluster bootstrap (k3s/kubeadm/k0s/Talos)</text>
+  <text x="50" y="118" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Security hardening at creation time</text>
+  <text x="50" y="138" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Kubeconfig fetch &amp; merge</text>
+  <text x="50" y="158" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Reconciler-driven state management</text>
+
+  <line x1="310" y1="100" x2="340" y2="100" stroke="#475569" stroke-width="1.5" marker-end="url(#la)"/>
+
+  <rect x="340" y="24" width="280" height="152" rx="10" fill="url(#day1)" stroke="#f59e0b" stroke-width="1.5"/>
+  <rect x="340" y="24" width="280" height="34" rx="10" fill="#f59e0b" opacity="0.15"/>
+  <text x="360" y="47" font-family="'Segoe UI', Arial, sans-serif" font-size="15" font-weight="bold" fill="#fbbf24">Day 1 — Configure &amp; Harden</text>
+  <text x="360" y="78" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Addon installation (Helm SDK / Manifests)</text>
+  <text x="360" y="98" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">CIS Benchmark compliance profiles</text>
+  <text x="360" y="118" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Security audit with compliance scoring</text>
+  <text x="360" y="138" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Certificate management &amp; auto-rotation</text>
+  <text x="360" y="158" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Encryption at rest, TLS hardening</text>
+
+  <line x1="620" y1="100" x2="650" y2="100" stroke="#475569" stroke-width="1.5" marker-end="url(#la)"/>
+
+  <rect x="650" y="24" width="280" height="152" rx="10" fill="url(#day2)" stroke="#22c55e" stroke-width="1.5"/>
+  <rect x="650" y="24" width="280" height="34" rx="10" fill="#22c55e" opacity="0.15"/>
+  <text x="670" y="47" font-family="'Segoe UI', Arial, sans-serif" font-size="15" font-weight="bold" fill="#86efac">Day 2 — Operate &amp; Scale</text>
+  <text x="670" y="78" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Rolling upgrades (drain/upgrade/verify)</text>
+  <text x="670" y="98" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">etcd health, backup, restore, defrag</text>
+  <text x="670" y="118" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Fleet management (multi-cluster ops)</text>
+  <text x="670" y="138" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Airgap packaging &amp; offline install</text>
+  <text x="670" y="158" font-family="'Segoe UI', Arial, sans-serif" font-size="12" fill="#64748b">Diff, drift detection, state resume</text>
+</svg>

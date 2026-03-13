@@ -1,10 +1,21 @@
-# IronKube
+<p align="center">
+  <img src="assets/banner.svg" alt="IronKube" width="900">
+</p>
+
+<p align="center">
+  <a href="https://github.com/rohitg00/ironkube/actions"><img src="https://github.com/rohitg00/ironkube/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://goreportcard.com/report/github.com/rohitg00/ironkube"><img src="https://goreportcard.com/badge/github.com/rohitg00/ironkube" alt="Go Report Card"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License"></a>
+  <a href="https://pkg.go.dev/github.com/rohitg00/ironkube"><img src="https://pkg.go.dev/badge/github.com/rohitg00/ironkube.svg" alt="Go Reference"></a>
+</p>
+
+---
 
 Unified Kubernetes lifecycle management — Day 0 through Day 2 — with no management cluster. One binary, one config, any distro, any infrastructure.
 
-## What it does
-
-IronKube manages the full Kubernetes lifecycle: provisioning infrastructure, bootstrapping clusters, installing addons, rolling upgrades, certificate rotation, etcd operations, backup/restore, fleet management, airgap packaging, and security compliance — all from a single declarative config.
+<p align="center">
+  <img src="assets/lifecycle.svg" alt="IronKube Lifecycle" width="900">
+</p>
 
 ## Key design decisions
 
@@ -90,6 +101,12 @@ ironkube apply -c cluster.yaml --dry-run
 ironkube apply -c cluster.yaml
 ```
 
+## Architecture
+
+<p align="center">
+  <img src="assets/architecture.svg" alt="IronKube Architecture" width="900">
+</p>
+
 ## CLI commands
 
 ```text
@@ -128,6 +145,14 @@ ironkube state list                          List clusters in state
 ironkube state inspect --name <cluster>      Show raw state
 ironkube state delete  --name <cluster>      Delete state
 ```
+
+## Security profiles
+
+| Profile | Description |
+|---------|-------------|
+| `minimal` | Default. No additional hardening flags. |
+| `cis` | CIS Kubernetes Benchmark: anonymous auth disabled, audit logging, RBAC, protect-kernel-defaults, read-only kubelet port disabled, etcd mutual TLS |
+| `hardened` | CIS + admission plugins (NodeRestriction, PodSecurity), encryption at rest, TLS 1.2 minimum, restricted cipher suites |
 
 ## Config reference
 
@@ -228,47 +253,11 @@ spec:
     upgradeWindow: "02:00-06:00"
 ```
 
-## Security profiles
-
-| Profile | Description |
-|---------|-------------|
-| `minimal` | Default. No additional hardening flags. |
-| `cis` | CIS Kubernetes Benchmark: anonymous auth disabled, audit logging, RBAC, protect-kernel-defaults, read-only kubelet port disabled, etcd mutual TLS |
-| `hardened` | CIS + admission plugins (NodeRestriction, PodSecurity), encryption at rest, TLS 1.2 minimum, restricted cipher suites |
-
-## Architecture
-
-```text
-ironkube apply -c cluster.yaml
-  │
-  ├─ Load Config (v1alpha2)
-  ├─ Apply Defaults + Validate
-  ├─ Load State (local/git/s3)
-  ├─ Reconcile (desired vs actual → actions)
-  │
-  ├─ InfraProvider.Provision()      → create/verify machines
-  ├─ BootstrapProvider.Init/Join()  → bootstrap data (scripts, files, env)
-  ├─ ControlPlaneProvider.Wait()    → verify API + nodes ready
-  ├─ AddonProvider.Install()        → Helm charts / manifests
-  │
-  └─ Save State
-```
-
-```text
-Provider Model (3+1):
-
-  InfraProvider          BootstrapProvider       ControlPlaneProvider    AddonProvider
-  ├─ SSH (bare-metal)    ├─ k3s                  └─ Universal            ├─ Helm SDK
-  ├─ Hetzner (cloud)     ├─ kubeadm                 (client-go)         └─ Manifest
-  └─ Docker (dev)        ├─ k0s
-                         └─ Talos
-```
-
 ## Development
 
 ```bash
 make build       # Build binary
-make test        # Run all tests (862 tests)
+make test        # Run all tests (863 tests)
 make lint        # go vet
 make coverage    # Generate coverage report
 ```
