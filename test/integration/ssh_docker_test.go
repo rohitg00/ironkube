@@ -70,7 +70,8 @@ func startSSHContainer(t *testing.T) (containerName string, port int, keyPath st
 	portOut, err := portCmd.Output()
 	require.NoError(t, err, "failed to get mapped port")
 
-	portStr := strings.TrimSpace(string(portOut))
+	portLines := strings.Split(strings.TrimSpace(string(portOut)), "\n")
+	portStr := strings.TrimSpace(portLines[0])
 	_, portPart, err := net.SplitHostPort(portStr)
 	require.NoError(t, err, "failed to parse host:port from %q", portStr)
 
