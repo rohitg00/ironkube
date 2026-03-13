@@ -30,7 +30,7 @@ func (k *K3s) ValidateVersion(version string) error {
 	return nil
 }
 
-func (k *K3s) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, token string, isInit bool) string {
+func (k *K3s) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, token string, isInit bool, extraFlags []string) string {
 	var sb strings.Builder
 
 	sb.WriteString("curl -sfL https://get.k3s.io | ")
@@ -57,6 +57,11 @@ func (k *K3s) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, t
 
 	if cfg.Spec.Networking.SvcCIDR != "" {
 		sb.WriteString(fmt.Sprintf(" --service-cidr=%s", cfg.Spec.Networking.SvcCIDR))
+	}
+
+	for _, f := range extraFlags {
+		sb.WriteString(" ")
+		sb.WriteString(f)
 	}
 
 	return sb.String()

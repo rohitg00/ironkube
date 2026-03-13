@@ -54,7 +54,7 @@ func TestServerInstallScriptInit(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "", true)
+	script := p.ServerInstallScript(node, cfg, "", true, nil)
 	assert.Contains(t, script, "kubeadm init")
 	assert.Contains(t, script, "--pod-network-cidr=10.244.0.0/16")
 	assert.Contains(t, script, "--service-cidr=10.96.0.0/12")
@@ -81,7 +81,7 @@ func TestServerInstallScriptHA(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "hatoken", true)
+	script := p.ServerInstallScript(node, cfg, "hatoken", true, nil)
 	assert.Contains(t, script, "--control-plane-endpoint=10.0.0.1:6443")
 	assert.Contains(t, script, "--upload-certs")
 }
@@ -106,7 +106,7 @@ func TestServerInstallScriptJoin(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "jointoken", false)
+	script := p.ServerInstallScript(node, cfg, "jointoken", false, nil)
 	assert.Contains(t, script, "kubeadm join")
 	assert.Contains(t, script, "--control-plane")
 	assert.Contains(t, script, "10.0.0.1:6443")

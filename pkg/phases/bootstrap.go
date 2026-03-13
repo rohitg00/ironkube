@@ -11,6 +11,7 @@ import (
 	"github.com/rohitg00/ironkube/pkg/config"
 	"github.com/rohitg00/ironkube/pkg/distro"
 	"github.com/rohitg00/ironkube/pkg/engine"
+	"github.com/rohitg00/ironkube/pkg/security"
 	"github.com/rohitg00/ironkube/pkg/ssh"
 )
 
@@ -36,8 +37,10 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 	token := generateToken()
 	state.Set("cluster_token", token)
 
+	extraFlags := security.FlagsForDistro(p.Config.Spec.Security.Profile, plugin.Name())
+
 	firstNode := p.Config.Spec.ControlPlane.Nodes[0]
-	installCmd := plugin.ServerInstallScript(firstNode, p.Config, token, true)
+	installCmd := plugin.ServerInstallScript(firstNode, p.Config, token, true, extraFlags)
 
 	out, err := exec.RunOnHost(firstNode.Host, installCmd)
 	if err != nil {
@@ -52,7 +55,7 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 
 	for i := 1; i < len(p.Config.Spec.ControlPlane.Nodes); i++ {
 		node := p.Config.Spec.ControlPlane.Nodes[i]
-		joinCmd := plugin.ServerInstallScript(node, p.Config, token, false)
+		joinCmd := plugin.ServerInstallScript(node, p.Config, token, false, extraFlags)
 
 		out, err := exec.RunOnHost(node.Host, joinCmd)
 		if err != nil {

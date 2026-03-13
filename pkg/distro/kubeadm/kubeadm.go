@@ -27,7 +27,7 @@ func (k *Kubeadm) ValidateVersion(version string) error {
 	return nil
 }
 
-func (k *Kubeadm) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, token string, isInit bool) string {
+func (k *Kubeadm) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, token string, isInit bool, extraFlags []string) string {
 	ver := strings.TrimPrefix(cfg.Spec.Version, "v")
 	shortVer := ver
 	parts := strings.SplitN(ver, ".", 3)
@@ -58,6 +58,11 @@ func (k *Kubeadm) ServerInstallScript(node config.Node, cfg *config.ClusterConfi
 	} else {
 		firstNode := cfg.Spec.ControlPlane.Nodes[0]
 		sb.WriteString(fmt.Sprintf(" && kubeadm join %s:6443 --token %s --control-plane", firstNode.Host, token))
+	}
+
+	for _, f := range extraFlags {
+		sb.WriteString(" ")
+		sb.WriteString(f)
 	}
 
 	return sb.String()
