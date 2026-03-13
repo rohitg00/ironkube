@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 540">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#141c2e"/>
+    </linearGradient>
+    <marker id="arr" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,3.5 L0,7z" fill="#475569"/>
+    </marker>
+    <marker id="arr-a" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,3.5 L0,7z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arr-d" viewBox="0 0 10 7" refX="10" refY="3.5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M0,0 L10,3.5 L0,7z" fill="#475569"/>
+    </marker>
+  </defs>
+
+  <rect width="960" height="540" rx="12" fill="url(#bg)"/>
+
+  <text x="480" y="32" font-family="'Segoe UI',Arial,sans-serif" font-size="18" font-weight="bold" fill="#e2e8f0" text-anchor="middle">Architecture</text>
+
+  <rect x="310" y="52" width="340" height="48" rx="8" fill="#172554" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="480" y="74" font-family="'Segoe UI',Arial,sans-serif" font-size="14" font-weight="bold" fill="#93c5fd" text-anchor="middle">Config (v1alpha2)</text>
+  <text x="480" y="90" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="#64748b" text-anchor="middle">Load + Validate + Defaults</text>
+
+  <line x1="480" y1="100" x2="480" y2="130" stroke="#475569" stroke-width="1.5" marker-end="url(#arr)"/>
+
+  <rect x="230" y="132" width="500" height="52" rx="8" fill="#2a1f0e" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="480" y="155" font-family="'Segoe UI',Arial,sans-serif" font-size="15" font-weight="bold" fill="#fbbf24" text-anchor="middle">Reconciler Engine</text>
+  <text x="480" y="173" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="#a08050" text-anchor="middle">Desired vs Actual → Minimal Action Plan → Pipeline + Hooks</text>
+
+  <rect x="770" y="52" width="160" height="48" rx="8" fill="#2a0e2a" stroke="#a855f7" stroke-width="1.5"/>
+  <text x="850" y="74" font-family="'Segoe UI',Arial,sans-serif" font-size="13" font-weight="bold" fill="#c084fc" text-anchor="middle">Persistent State</text>
+  <text x="850" y="90" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="#7c3aed" text-anchor="middle">Lock · Diff · Resume</text>
+
+  <path d="M850,100 L850,158 L730,158" fill="none" stroke="#475569" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-d)"/>
+
+  <line x1="210" y1="210" x2="210" y2="250" stroke="#f59e0b" stroke-width="1.5" opacity="0.6" marker-end="url(#arr-a)"/>
+  <line x1="480" y1="210" x2="480" y2="250" stroke="#f59e0b" stroke-width="1.5" opacity="0.6" marker-end="url(#arr-a)"/>
+  <line x1="750" y1="210" x2="750" y2="250" stroke="#f59e0b" stroke-width="1.5" opacity="0.6" marker-end="url(#arr-a)"/>
+
+  <path d="M480,184 L480,210" fill="none" stroke="#f59e0b" stroke-width="1.5" opacity="0.6"/>
+  <path d="M480,210 L210,210" fill="none" stroke="#f59e0b" stroke-width="1.5" opacity="0.6"/>
+  <path d="M480,210 L750,210" fill="none" stroke="#f59e0b" stroke-width="1.5" opacity="0.6"/>
+
+  <text x="480" y="240" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="#475569" text-anchor="middle" letter-spacing="2">PROVIDERS</text>
+
+  <rect x="80" y="252" width="260" height="145" rx="8" fill="#0f2418" stroke="#059669" stroke-width="1.5"/>
+  <text x="210" y="276" font-family="'Segoe UI',Arial,sans-serif" font-size="14" font-weight="bold" fill="#6ee7b7" text-anchor="middle">InfraProvider</text>
+  <line x1="110" y1="286" x2="310" y2="286" stroke="#059669" stroke-width="0.5" opacity="0.3"/>
+  <rect x="105" y="296" width="210" height="26" rx="5" fill="#122b1e" stroke="#059669" stroke-width="0.8" opacity="0.5"/>
+  <text x="210" y="314" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#86efac" text-anchor="middle">SSH (bare-metal / VPS)</text>
+  <rect x="105" y="328" width="210" height="26" rx="5" fill="#122b1e" stroke="#059669" stroke-width="0.8" opacity="0.5"/>
+  <text x="210" y="346" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#86efac" text-anchor="middle">Hetzner Cloud</text>
+  <rect x="105" y="360" width="210" height="26" rx="5" fill="#122b1e" stroke="#059669" stroke-width="0.8" opacity="0.5"/>
+  <text x="210" y="378" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#86efac" text-anchor="middle">Docker (dev / test)</text>
+
+  <rect x="350" y="252" width="260" height="145" rx="8" fill="#0f2418" stroke="#059669" stroke-width="1.5"/>
+  <text x="480" y="276" font-family="'Segoe UI',Arial,sans-serif" font-size="14" font-weight="bold" fill="#6ee7b7" text-anchor="middle">BootstrapProvider</text>
+  <line x1="380" y1="286" x2="580" y2="286" stroke="#059669" stroke-width="0.5" opacity="0.3"/>
+  <rect x="370" y="296" width="100" height="26" rx="5" fill="#122b1e" stroke="#059669" stroke-width="0.8" opacity="0.5"/>
+  <text x="420" y="314" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#86efac" text-anchor="middle">k3s</text>
+  <rect x="490" y="296" width="100" height="26" rx="5" fill="#122b1e" stroke="#059669" stroke-width="0.8" opacity="0.5"/>
+  <text x="540" y="314" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#86efac" text-anchor="middle">kubeadm</text>
+  <rect x="370" y="328" width="100" height="26" rx="5" fill="#122b1e" stroke="#059669" stroke-width="0.8" opacity="0.5"/>
+  <text x="420" y="346" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#86efac" text-anchor="middle">k0s</text>
+  <rect x="490" y="328" width="100" height="26" rx="5" fill="#122b1e" stroke="#059669" stroke-width="0.8" opacity="0.5"/>
+  <text x="540" y="346" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#86efac" text-anchor="middle">Talos</text>
+  <rect x="375" y="362" width="210" height="26" rx="5" fill="#172554" stroke="#3b82f6" stroke-width="0.8" opacity="0.6"/>
+  <text x="480" y="380" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#93c5fd" text-anchor="middle">ControlPlane (client-go)</text>
+
+  <rect x="620" y="252" width="260" height="145" rx="8" fill="#0f2418" stroke="#059669" stroke-width="1.5"/>
+  <text x="750" y="276" font-family="'Segoe UI',Arial,sans-serif" font-size="14" font-weight="bold" fill="#6ee7b7" text-anchor="middle">AddonProvider</text>
+  <line x1="650" y1="286" x2="850" y2="286" stroke="#059669" stroke-width="0.5" opacity="0.3"/>
+  <rect x="645" y="296" width="210" height="26" rx="5" fill="#122b1e" stroke="#059669" stroke-width="0.8" opacity="0.5"/>
+  <text x="750" y="314" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#86efac" text-anchor="middle">Helm SDK</text>
+  <rect x="645" y="328" width="210" height="26" rx="5" fill="#122b1e" stroke="#059669" stroke-width="0.8" opacity="0.5"/>
+  <text x="750" y="346" font-family="'Segoe UI',Arial,sans-serif" font-size="12" fill="#86efac" text-anchor="middle">Raw Manifests</text>
+
+  <text x="480" y="424" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="#475569" text-anchor="middle" letter-spacing="2">DAY 2 OPERATIONS</text>
+  <line x1="200" y1="430" x2="760" y2="430" stroke="#334155" stroke-width="0.5"/>
+
+  <rect x="55" y="442" width="125" height="44" rx="6" fill="#1e1538" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="117" y="461" font-family="'Segoe UI',Arial,sans-serif" font-size="12" font-weight="bold" fill="#c4b5fd" text-anchor="middle">Certs</text>
+  <text x="117" y="477" font-family="'Segoe UI',Arial,sans-serif" font-size="10" fill="#7c3aed" text-anchor="middle">Check · Rotate</text>
+
+  <rect x="196" y="442" width="125" height="44" rx="6" fill="#1e1538" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="258" y="461" font-family="'Segoe UI',Arial,sans-serif" font-size="12" font-weight="bold" fill="#c4b5fd" text-anchor="middle">etcd</text>
+  <text x="258" y="477" font-family="'Segoe UI',Arial,sans-serif" font-size="10" fill="#7c3aed" text-anchor="middle">Health · Backup · Defrag</text>
+
+  <rect x="337" y="442" width="125" height="44" rx="6" fill="#1e1538" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="399" y="461" font-family="'Segoe UI',Arial,sans-serif" font-size="12" font-weight="bold" fill="#c4b5fd" text-anchor="middle">Upgrades</text>
+  <text x="399" y="477" font-family="'Segoe UI',Arial,sans-serif" font-size="10" fill="#7c3aed" text-anchor="middle">Rolling · Drain · Verify</text>
+
+  <rect x="478" y="442" width="125" height="44" rx="6" fill="#1e1538" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="540" y="461" font-family="'Segoe UI',Arial,sans-serif" font-size="12" font-weight="bold" fill="#c4b5fd" text-anchor="middle">Fleet</text>
+  <text x="540" y="477" font-family="'Segoe UI',Arial,sans-serif" font-size="10" fill="#7c3aed" text-anchor="middle">Status · Diff · Upgrade</text>
+
+  <rect x="619" y="442" width="125" height="44" rx="6" fill="#1e1538" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="681" y="461" font-family="'Segoe UI',Arial,sans-serif" font-size="12" font-weight="bold" fill="#c4b5fd" text-anchor="middle">Airgap</text>
+  <text x="681" y="477" font-family="'Segoe UI',Arial,sans-serif" font-size="10" fill="#7c3aed" text-anchor="middle">Bundle · Load</text>
+
+  <rect x="760" y="442" width="125" height="44" rx="6" fill="#1e1538" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="822" y="461" font-family="'Segoe UI',Arial,sans-serif" font-size="12" font-weight="bold" fill="#c4b5fd" text-anchor="middle">Security</text>
+  <text x="822" y="477" font-family="'Segoe UI',Arial,sans-serif" font-size="10" fill="#7c3aed" text-anchor="middle">Audit · CIS · Hardened</text>
+
+  <text x="480" y="520" font-family="'Segoe UI',Arial,sans-serif" font-size="11" fill="#334155" text-anchor="middle">No management cluster · Single Go binary · Reconciler-driven · client-go for all K8s interaction</text>
+</svg>
