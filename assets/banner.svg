@@ -75,7 +75,7 @@
     <circle cx="256" cy="256" r="10" fill="#fbbf24"/>
   </g>
 
-  <text x="260" y="140" font-family="'Segoe UI',Arial,Helvetica,sans-serif" font-size="68" font-weight="bold" fill="#f1f5f9" letter-spacing="-1">Iron<tspan fill="#f59e0b">Kube</tspan></text>
+  <text x="260" y="140" font-family="'Segoe UI',Arial,Helvetica,sans-serif" font-size="68" font-weight="bold" fill="#f1f5f9" letter-spacing="-1">Iron<tspan fill="#f59e0b" dx="-8">Kube</tspan></text>
 
   <text x="262" y="178" font-family="'Segoe UI',Arial,Helvetica,sans-serif" font-size="20" fill="#94a3b8">Unified Kubernetes lifecycle management</text>
 
