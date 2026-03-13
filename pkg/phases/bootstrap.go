@@ -37,13 +37,13 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 	token := generateToken()
 	state.Set("cluster_token", token)
 
-	extraFlags, err := security.FlagsForDistro(p.Config.Spec.Security.Profile, plugin.Name())
+	secFlags, err := security.FlagsForProfile(p.Config.Spec.Security.Profile)
 	if err != nil {
 		return fmt.Errorf("resolving security flags: %w", err)
 	}
 
 	firstNode := p.Config.Spec.ControlPlane.Nodes[0]
-	installCmd := plugin.ServerInstallScript(firstNode, p.Config, token, true, extraFlags)
+	installCmd := plugin.ServerInstallScript(firstNode, p.Config, token, true, secFlags)
 
 	out, err := exec.RunOnHost(firstNode.Host, installCmd)
 	if err != nil {
@@ -58,7 +58,7 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 
 	for i := 1; i < len(p.Config.Spec.ControlPlane.Nodes); i++ {
 		node := p.Config.Spec.ControlPlane.Nodes[i]
-		joinCmd := plugin.ServerInstallScript(node, p.Config, token, false, extraFlags)
+		joinCmd := plugin.ServerInstallScript(node, p.Config, token, false, secFlags)
 
 		out, err := exec.RunOnHost(node.Host, joinCmd)
 		if err != nil {

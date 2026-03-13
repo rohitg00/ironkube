@@ -46,3 +46,13 @@ type Networking struct {
 	PodCIDR string `yaml:"podCIDR" json:"podCIDR"`
 	SvcCIDR string `yaml:"serviceCIDR" json:"serviceCIDR"`
 }
+
+type SecurityFlags struct {
+	APIServer []string
+	Kubelet   []string
+	Etcd      []string
+}
+
+func (sf SecurityFlags) IsEmpty() bool {
+	return len(sf.APIServer) == 0 && len(sf.Kubelet) == 0 && len(sf.Etcd) == 0
+}

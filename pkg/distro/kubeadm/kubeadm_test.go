@@ -54,7 +54,7 @@ func TestServerInstallScriptInit(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "", true, nil)
+	script := p.ServerInstallScript(node, cfg, "", true, config.SecurityFlags{})
 	assert.Contains(t, script, "kubeadm init")
 	assert.Contains(t, script, "--pod-network-cidr=10.244.0.0/16")
 	assert.Contains(t, script, "--service-cidr=10.96.0.0/12")
@@ -81,7 +81,7 @@ func TestServerInstallScriptHA(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "hatoken", true, nil)
+	script := p.ServerInstallScript(node, cfg, "hatoken", true, config.SecurityFlags{})
 	assert.Contains(t, script, "--control-plane-endpoint=10.0.0.1:6443")
 	assert.Contains(t, script, "--upload-certs")
 }
@@ -106,10 +106,98 @@ func TestServerInstallScriptJoin(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "jointoken", false, nil)
+	script := p.ServerInstallScript(node, cfg, "jointoken", false, config.SecurityFlags{})
 	assert.Contains(t, script, "kubeadm join")
 	assert.Contains(t, script, "--control-plane")
 	assert.Contains(t, script, "10.0.0.1:6443")
+}
+
+func TestServerInstallScriptInitWithSecurityFlags(t *testing.T) {
+	p := New()
+	node := config.Node{Host: "10.0.0.1", User: "root", Port: 22}
+	cfg := &config.ClusterConfig{
+		Spec: config.ClusterSpec{
+			Version: "v1.28.2",
+			ControlPlane: config.ControlPlane{
+				Replicas: 1,
+				Nodes:    []config.Node{node},
+			},
+			Networking: config.Networking{
+				PodCIDR: "10.244.0.0/16",
+			},
+		},
+	}
+
+	secFlags := config.SecurityFlags{
+		APIServer: []string{"--anonymous-auth=false", "--profiling=false"},
+		Kubelet:   []string{"--protect-kernel-defaults=true"},
+		Etcd:      []string{"--client-cert-auth=true"},
+	}
+
+	script := p.ServerInstallScript(node, cfg, "", true, secFlags)
+	assert.Contains(t, script, "kubeadm init --config /tmp/kubeadm-config.yaml")
+	assert.Contains(t, script, "anonymous-auth: \"false\"")
+	assert.Contains(t, script, "profiling: \"false\"")
+	assert.Contains(t, script, "protect-kernel-defaults: \"true\"")
+	assert.Contains(t, script, "client-cert-auth: \"true\"")
+	assert.Contains(t, script, "apiServer:")
+	assert.Contains(t, script, "etcd:")
+	assert.Contains(t, script, "kubeletExtraArgs:")
+	assert.Contains(t, script, "podSubnet: \"10.244.0.0/16\"")
+}
+
+func TestServerInstallScriptJoinWithSecurityFlags(t *testing.T) {
+	p := New()
+	node := config.Node{Host: "10.0.0.2", User: "root", Port: 22}
+	cfg := &config.ClusterConfig{
+		Spec: config.ClusterSpec{
+			Version: "v1.28.2",
+			ControlPlane: config.ControlPlane{
+				Replicas: 3,
+				Nodes: []config.Node{
+					{Host: "10.0.0.1", User: "root", Port: 22},
+					{Host: "10.0.0.2", User: "root", Port: 22},
+				},
+			},
+		},
+	}
+
+	secFlags := config.SecurityFlags{
+		Kubelet: []string{"--protect-kernel-defaults=true"},
+	}
+
+	script := p.ServerInstallScript(node, cfg, "jointoken", false, secFlags)
+	assert.Contains(t, script, "kubeadm join --config /tmp/kubeadm-join-config.yaml")
+	assert.Contains(t, script, "protect-kernel-defaults: \"true\"")
+	assert.Contains(t, script, "bootstrapToken:")
+	assert.Contains(t, script, "controlPlane: {}")
+}
+
+func TestServerInstallScriptHAInitWithSecurityFlags(t *testing.T) {
+	p := New()
+	node := config.Node{Host: "10.0.0.1", User: "root", Port: 22}
+	cfg := &config.ClusterConfig{
+		Spec: config.ClusterSpec{
+			Version: "v1.28.2",
+			ControlPlane: config.ControlPlane{
+				Replicas: 3,
+				Nodes: []config.Node{
+					{Host: "10.0.0.1", User: "root", Port: 22},
+					{Host: "10.0.0.2", User: "root", Port: 22},
+					{Host: "10.0.0.3", User: "root", Port: 22},
+				},
+			},
+		},
+	}
+
+	secFlags := config.SecurityFlags{
+		APIServer: []string{"--anonymous-auth=false"},
+	}
+
+	script := p.ServerInstallScript(node, cfg, "hatoken", true, secFlags)
+	assert.Contains(t, script, "--config /tmp/kubeadm-config.yaml")
+	assert.Contains(t, script, "--upload-certs")
+	assert.Contains(t, script, "controlPlaneEndpoint: \"10.0.0.1:6443\"")
 }
 
 func TestAgentInstallScript(t *testing.T) {
@@ -145,4 +233,21 @@ func TestUninstallCmd(t *testing.T) {
 		cmd := p.UninstallCmd("agent")
 		assert.Contains(t, cmd, "kubeadm reset")
 	})
+}
+
+func TestParseFlag(t *testing.T) {
+	tests := []struct {
+		input string
+		key   string
+		value string
+	}{
+		{"--anonymous-auth=false", "anonymous-auth", "false"},
+		{"--audit-log-path=/var/log/audit.log", "audit-log-path", "/var/log/audit.log"},
+		{"--flag", "flag", "true"},
+	}
+	for _, tc := range tests {
+		k, v := parseFlag(tc.input)
+		assert.Equal(t, tc.key, k)
+		assert.Equal(t, tc.value, v)
+	}
 }

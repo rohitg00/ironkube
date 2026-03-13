@@ -82,7 +82,8 @@ func NewApplyCmd() *cobra.Command {
 			fmt.Fprintln(w, "\nApplying changes...")
 			startTime := time.Now()
 
-			if hasCreateActions {
+			needsBootstrap := hasCreateActions && len(clusterState.Machines) == 0
+		if needsBootstrap {
 				v1Cfg := pkgconfig.FromV1Alpha2(cfg)
 
 				home, homeErr := os.UserHomeDir()

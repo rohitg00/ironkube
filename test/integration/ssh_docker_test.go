@@ -35,7 +35,7 @@ func startSSHContainer(t *testing.T) (containerName string, port int, keyPath st
 	pubKey, err := os.ReadFile(keyPath + ".pub")
 	require.NoError(t, err, "failed to read public key")
 
-	containerName = fmt.Sprintf("ironkube-ssh-test-%d", time.Now().UnixNano()%100000)
+	containerName = fmt.Sprintf("ironkube-ssh-test-%d-%d", time.Now().UnixNano(), os.Getpid())
 
 	cleanup := func() {
 		exec.Command("docker", "rm", "-f", containerName).Run()
@@ -63,7 +63,7 @@ func startSSHContainer(t *testing.T) (containerName string, port int, keyPath st
 	)
 	out, err := startCmd.CombinedOutput()
 	if err != nil {
-		t.Skipf("failed to start Docker container: %v\n%s", err, out)
+		t.Fatalf("failed to start Docker container: %v\n%s", err, out)
 	}
 
 	portCmd := exec.Command("docker", "port", containerName, "22")

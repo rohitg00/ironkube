@@ -76,7 +76,6 @@ func warnDroppedFields(v2 *v1alpha2.ClusterConfig) {
 	for _, wp := range v2.Spec.Workers {
 		if len(wp.Labels) > 0 || len(wp.Taints) > 0 || wp.Count > 0 {
 			dropped = append(dropped, fmt.Sprintf("spec.workers[%s].labels/taints/count", wp.Name))
-			break
 		}
 	}
 
