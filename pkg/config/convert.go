@@ -1,10 +1,15 @@
 package config
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/rohitg00/ironkube/pkg/config/v1alpha2"
 )
 
 func FromV1Alpha2(v2 *v1alpha2.ClusterConfig) *ClusterConfig {
+	warnDroppedFields(v2)
+
 	cfg := &ClusterConfig{
 		APIVersion: "ironkube.dev/v1alpha1",
 		Kind:       "Cluster",
@@ -51,6 +56,35 @@ func defaultCNI(distro string) string {
 		return "flannel"
 	}
 	return "calico"
+}
+
+func warnDroppedFields(v2 *v1alpha2.ClusterConfig) {
+	var dropped []string
+
+	if len(v2.Spec.Addons) > 0 {
+		dropped = append(dropped, "spec.addons")
+	}
+	if v2.Spec.Lifecycle.Certs.AutoRotate || v2.Spec.Lifecycle.Etcd.BackupSchedule != "" || v2.Spec.Lifecycle.Upgrades.Strategy != "" {
+		dropped = append(dropped, "spec.lifecycle")
+	}
+	if v2.Spec.State.Backend != "" {
+		dropped = append(dropped, "spec.state")
+	}
+	if v2.Spec.Infrastructure.Provider != "" && v2.Spec.Infrastructure.Provider != "ssh" {
+		dropped = append(dropped, fmt.Sprintf("spec.infrastructure.provider=%s", v2.Spec.Infrastructure.Provider))
+	}
+	for _, wp := range v2.Spec.Workers {
+		if len(wp.Labels) > 0 || len(wp.Taints) > 0 || wp.Count > 0 {
+			dropped = append(dropped, fmt.Sprintf("spec.workers[%s].labels/taints/count", wp.Name))
+			break
+		}
+	}
+
+	if len(dropped) > 0 {
+		for _, field := range dropped {
+			fmt.Fprintf(os.Stderr, "warning: %s dropped during bootstrap conversion\n", field)
+		}
+	}
 }
 
 func convertNodes(v2Nodes []v1alpha2.Node, globalKeyPath string) []Node {

@@ -62,10 +62,14 @@ func (k *Kubeadm) ServerInstallScript(node config.Node, cfg *config.ClusterConfi
 
 	for _, f := range extraFlags {
 		sb.WriteString(" ")
-		sb.WriteString(f)
+		sb.WriteString(shellQuote(f))
 	}
 
 	return sb.String()
+}
+
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'"
 }
 
 func (k *Kubeadm) AgentInstallScript(node config.Node, cfg *config.ClusterConfig, serverURL string, token string) string {

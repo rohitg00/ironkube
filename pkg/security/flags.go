@@ -1,28 +1,29 @@
 package security
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/rohitg00/ironkube/pkg/provider"
 )
 
-func FlagsForDistro(profileName, distroName string) []string {
+func FlagsForDistro(profileName, distroName string) ([]string, error) {
 	if profileName == "" || profileName == "minimal" {
-		return nil
+		return nil, nil
 	}
 
 	profile, err := GetProfile(profileName)
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("unknown security profile %q: %w", profileName, err)
 	}
 
 	switch distroName {
 	case "k3s":
-		return k3sFlags(profile)
+		return k3sFlags(profile), nil
 	case "kubeadm":
-		return kubeadmFlags(profile)
+		return kubeadmFlags(profile), nil
 	default:
-		return nil
+		return nil, fmt.Errorf("unsupported distro %q for security flags", distroName)
 	}
 }
 

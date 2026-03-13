@@ -82,9 +82,18 @@ func NewApplyCmd() *cobra.Command {
 			fmt.Fprintln(w, "\nApplying changes...")
 			startTime := time.Now()
 
-			if hasCreateActions && len(clusterState.Machines) == 0 {
+			if hasCreateActions {
 				v1Cfg := pkgconfig.FromV1Alpha2(cfg)
-				kubeconfigPath := filepath.Join(os.TempDir(), fmt.Sprintf("ironkube-%s-kubeconfig", cfg.Metadata.Name))
+
+				home, homeErr := os.UserHomeDir()
+				if homeErr != nil {
+					return fmt.Errorf("determining home directory: %w", homeErr)
+				}
+				kubeconfigDir := filepath.Join(home, ".ironkube", "clusters", cfg.Metadata.Name)
+				if mkErr := os.MkdirAll(kubeconfigDir, 0700); mkErr != nil {
+					return fmt.Errorf("creating kubeconfig directory: %w", mkErr)
+				}
+				kubeconfigPath := filepath.Join(kubeconfigDir, "kubeconfig")
 
 				pipeline := engine.NewPipeline(
 					&phases.ValidatePhase{Config: v1Cfg},
@@ -102,7 +111,9 @@ func NewApplyCmd() *cobra.Command {
 						Version:    cfg.Spec.Version,
 						Message:    err.Error(),
 					})
-					_ = backend.Save(clusterState)
+					if saveErr := backend.Save(clusterState); saveErr != nil {
+						return fmt.Errorf("bootstrap failed: %w (additionally, saving state failed: %v)", err, saveErr)
+					}
 					return fmt.Errorf("bootstrap failed: %w", err)
 				}
 

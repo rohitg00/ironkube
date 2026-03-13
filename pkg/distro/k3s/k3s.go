@@ -61,10 +61,14 @@ func (k *K3s) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, t
 
 	for _, f := range extraFlags {
 		sb.WriteString(" ")
-		sb.WriteString(f)
+		sb.WriteString(shellQuote(f))
 	}
 
 	return sb.String()
+}
+
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'"
 }
 
 func (k *K3s) AgentInstallScript(node config.Node, cfg *config.ClusterConfig, serverURL string, token string) string {

@@ -4,30 +4,36 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFlagsForDistro_EmptyProfile(t *testing.T) {
-	flags := FlagsForDistro("", "k3s")
+	flags, err := FlagsForDistro("", "k3s")
+	require.NoError(t, err)
 	assert.Nil(t, flags)
 }
 
 func TestFlagsForDistro_MinimalProfile(t *testing.T) {
-	flags := FlagsForDistro("minimal", "k3s")
+	flags, err := FlagsForDistro("minimal", "k3s")
+	require.NoError(t, err)
 	assert.Nil(t, flags)
 }
 
 func TestFlagsForDistro_UnknownProfile(t *testing.T) {
-	flags := FlagsForDistro("nonexistent", "k3s")
-	assert.Nil(t, flags)
+	_, err := FlagsForDistro("nonexistent", "k3s")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unknown security profile")
 }
 
 func TestFlagsForDistro_UnknownDistro(t *testing.T) {
-	flags := FlagsForDistro("cis", "rke2")
-	assert.Nil(t, flags)
+	_, err := FlagsForDistro("cis", "rke2")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "unsupported distro")
 }
 
 func TestFlagsForDistro_CISK3s(t *testing.T) {
-	flags := FlagsForDistro("cis", "k3s")
+	flags, err := FlagsForDistro("cis", "k3s")
+	require.NoError(t, err)
 	assert.NotEmpty(t, flags)
 
 	assert.Contains(t, flags, "--kubelet-arg=protect-kernel-defaults=true")
@@ -38,7 +44,8 @@ func TestFlagsForDistro_CISK3s(t *testing.T) {
 }
 
 func TestFlagsForDistro_CISKubeadm(t *testing.T) {
-	flags := FlagsForDistro("cis", "kubeadm")
+	flags, err := FlagsForDistro("cis", "kubeadm")
+	require.NoError(t, err)
 	assert.NotEmpty(t, flags)
 
 	assert.Contains(t, flags, "--anonymous-auth=false")
@@ -47,7 +54,8 @@ func TestFlagsForDistro_CISKubeadm(t *testing.T) {
 }
 
 func TestFlagsForDistro_HardenedK3s(t *testing.T) {
-	flags := FlagsForDistro("hardened", "k3s")
+	flags, err := FlagsForDistro("hardened", "k3s")
+	require.NoError(t, err)
 	assert.NotEmpty(t, flags)
 
 	assert.Contains(t, flags, "--kube-apiserver-arg=encryption-provider-config=/etc/kubernetes/encryption.yaml")
@@ -57,7 +65,8 @@ func TestFlagsForDistro_HardenedK3s(t *testing.T) {
 }
 
 func TestFlagsForDistro_HardenedKubeadm(t *testing.T) {
-	flags := FlagsForDistro("hardened", "kubeadm")
+	flags, err := FlagsForDistro("hardened", "kubeadm")
+	require.NoError(t, err)
 	assert.NotEmpty(t, flags)
 
 	assert.Contains(t, flags, "--encryption-provider-config=/etc/kubernetes/encryption.yaml")
@@ -67,7 +76,8 @@ func TestFlagsForDistro_HardenedKubeadm(t *testing.T) {
 }
 
 func TestFlagsForDistro_K3sFlagWrapping(t *testing.T) {
-	flags := FlagsForDistro("cis", "k3s")
+	flags, err := FlagsForDistro("cis", "k3s")
+	require.NoError(t, err)
 
 	for _, f := range flags {
 		hasPrefix := false
@@ -82,7 +92,8 @@ func TestFlagsForDistro_K3sFlagWrapping(t *testing.T) {
 }
 
 func TestFlagsForDistro_KubeadmFlagsPassedRaw(t *testing.T) {
-	flags := FlagsForDistro("cis", "kubeadm")
+	flags, err := FlagsForDistro("cis", "kubeadm")
+	require.NoError(t, err)
 
 	for _, f := range flags {
 		assert.NotContains(t, f, "kubelet-arg=")
@@ -92,11 +103,13 @@ func TestFlagsForDistro_KubeadmFlagsPassedRaw(t *testing.T) {
 }
 
 func TestFlagsForDistro_MinimalK3sReturnsNil(t *testing.T) {
-	flags := FlagsForDistro("minimal", "k3s")
+	flags, err := FlagsForDistro("minimal", "k3s")
+	require.NoError(t, err)
 	assert.Nil(t, flags)
 }
 
 func TestFlagsForDistro_MinimalKubeadmReturnsNil(t *testing.T) {
-	flags := FlagsForDistro("minimal", "kubeadm")
+	flags, err := FlagsForDistro("minimal", "kubeadm")
+	require.NoError(t, err)
 	assert.Nil(t, flags)
 }
