@@ -30,7 +30,7 @@ func (k *K3s) ValidateVersion(version string) error {
 	return nil
 }
 
-func (k *K3s) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, token string, isInit bool, secFlags config.SecurityFlags) string {
+func (k *K3s) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, token string, isInit bool, secFlags config.SecurityFlags, _ string) string {
 	var sb strings.Builder
 
 	sb.WriteString("curl -sfL https://get.k3s.io | ")

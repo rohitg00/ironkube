@@ -61,7 +61,7 @@ func TestServerInstallScriptInit(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "", true, config.SecurityFlags{})
+	script := p.ServerInstallScript(node, cfg, "", true, config.SecurityFlags{}, "")
 	assert.Contains(t, script, "INSTALL_K3S_VERSION=v1.28.2+k3s1")
 	assert.Contains(t, script, "--cluster-cidr=10.244.0.0/16")
 	assert.Contains(t, script, "--service-cidr=10.96.0.0/12")
@@ -89,7 +89,7 @@ func TestServerInstallScriptHAInit(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "mysecrettoken", true, config.SecurityFlags{})
+	script := p.ServerInstallScript(node, cfg, "mysecrettoken", true, config.SecurityFlags{}, "")
 	assert.Contains(t, script, "--cluster-init")
 	assert.Contains(t, script, "K3S_TOKEN=mysecrettoken")
 }
@@ -114,7 +114,7 @@ func TestServerInstallScriptHAJoin(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "mysecrettoken", false, config.SecurityFlags{})
+	script := p.ServerInstallScript(node, cfg, "mysecrettoken", false, config.SecurityFlags{}, "")
 	assert.Contains(t, script, "K3S_URL=https://10.0.0.1:6443")
 	assert.Contains(t, script, "K3S_TOKEN=mysecrettoken")
 	assert.NotContains(t, script, "--cluster-init")
@@ -139,7 +139,7 @@ func TestServerInstallScriptWithSecurityFlags(t *testing.T) {
 		Etcd:      []string{"--client-cert-auth=true"},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "", true, secFlags)
+	script := p.ServerInstallScript(node, cfg, "", true, secFlags, "")
 	assert.Contains(t, script, "--kubelet-arg=protect-kernel-defaults=true")
 	assert.Contains(t, script, "--kube-apiserver-arg=anonymous-auth=false")
 	assert.Contains(t, script, "--etcd-arg=client-cert-auth=true")
@@ -162,7 +162,7 @@ func TestServerInstallScriptFlagsAreShellQuoted(t *testing.T) {
 		APIServer: []string{"--flag=val'ue"},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "", true, secFlags)
+	script := p.ServerInstallScript(node, cfg, "", true, secFlags, "")
 	assert.Contains(t, script, "'\"'\"'")
 }
 

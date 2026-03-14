@@ -54,7 +54,7 @@ func TestServerInstallScriptInit(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "", true, config.SecurityFlags{})
+	script := p.ServerInstallScript(node, cfg, "", true, config.SecurityFlags{}, "")
 	assert.Contains(t, script, "kubeadm init")
 	assert.Contains(t, script, "--pod-network-cidr=10.244.0.0/16")
 	assert.Contains(t, script, "--service-cidr=10.96.0.0/12")
@@ -81,7 +81,7 @@ func TestServerInstallScriptHA(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "hatoken", true, config.SecurityFlags{})
+	script := p.ServerInstallScript(node, cfg, "hatoken", true, config.SecurityFlags{}, "")
 	assert.Contains(t, script, "--control-plane-endpoint=10.0.0.1:6443")
 	assert.Contains(t, script, "--upload-certs")
 }
@@ -106,7 +106,7 @@ func TestServerInstallScriptJoin(t *testing.T) {
 		},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "jointoken", false, config.SecurityFlags{})
+	script := p.ServerInstallScript(node, cfg, "jointoken", false, config.SecurityFlags{}, "")
 	assert.Contains(t, script, "kubeadm join")
 	assert.Contains(t, script, "--control-plane")
 	assert.Contains(t, script, "10.0.0.1:6443")
@@ -134,7 +134,7 @@ func TestServerInstallScriptInitWithSecurityFlags(t *testing.T) {
 		Etcd:      []string{"--client-cert-auth=true"},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "", true, secFlags)
+	script := p.ServerInstallScript(node, cfg, "", true, secFlags, "")
 	assert.Contains(t, script, "kubeadm init --config /tmp/kubeadm-config.yaml")
 	assert.Contains(t, script, "anonymous-auth: \"false\"")
 	assert.Contains(t, script, "profiling: \"false\"")
@@ -166,11 +166,11 @@ func TestServerInstallScriptJoinWithSecurityFlags(t *testing.T) {
 		Kubelet: []string{"--protect-kernel-defaults=true"},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "jointoken", false, secFlags)
+	script := p.ServerInstallScript(node, cfg, "jointoken", false, secFlags, "")
 	assert.Contains(t, script, "kubeadm join --config /tmp/kubeadm-join-config.yaml")
 	assert.Contains(t, script, "protect-kernel-defaults: \"true\"")
 	assert.Contains(t, script, "bootstrapToken:")
-	assert.Contains(t, script, "controlPlane: {}")
+	assert.Contains(t, script, "controlPlane: {}") // no cert key → empty controlPlane
 }
 
 func TestServerInstallScriptHAInitWithSecurityFlags(t *testing.T) {
@@ -194,10 +194,57 @@ func TestServerInstallScriptHAInitWithSecurityFlags(t *testing.T) {
 		APIServer: []string{"--anonymous-auth=false"},
 	}
 
-	script := p.ServerInstallScript(node, cfg, "hatoken", true, secFlags)
+	script := p.ServerInstallScript(node, cfg, "hatoken", true, secFlags, "")
 	assert.Contains(t, script, "--config /tmp/kubeadm-config.yaml")
 	assert.Contains(t, script, "--upload-certs")
 	assert.Contains(t, script, "controlPlaneEndpoint: \"10.0.0.1:6443\"")
+}
+
+func TestServerInstallScriptJoinWithCertKey(t *testing.T) {
+	p := New()
+	node := config.Node{Host: "10.0.0.2", User: "root", Port: 22}
+	cfg := &config.ClusterConfig{
+		Spec: config.ClusterSpec{
+			Version: "v1.28.2",
+			ControlPlane: config.ControlPlane{
+				Replicas: 3,
+				Nodes: []config.Node{
+					{Host: "10.0.0.1", User: "root", Port: 22},
+					{Host: "10.0.0.2", User: "root", Port: 22},
+				},
+			},
+		},
+	}
+
+	script := p.ServerInstallScript(node, cfg, "jointoken", false, config.SecurityFlags{}, "abc123certkey")
+	assert.Contains(t, script, "--certificate-key abc123certkey")
+	assert.Contains(t, script, "--discovery-token-unsafe-skip-ca-verification")
+}
+
+func TestServerInstallScriptJoinWithCertKeyAndSecFlags(t *testing.T) {
+	p := New()
+	node := config.Node{Host: "10.0.0.2", User: "root", Port: 22}
+	cfg := &config.ClusterConfig{
+		Spec: config.ClusterSpec{
+			Version: "v1.28.2",
+			ControlPlane: config.ControlPlane{
+				Replicas: 3,
+				Nodes: []config.Node{
+					{Host: "10.0.0.1", User: "root", Port: 22},
+					{Host: "10.0.0.2", User: "root", Port: 22},
+				},
+			},
+		},
+	}
+
+	secFlags := config.SecurityFlags{
+		Kubelet: []string{"--protect-kernel-defaults=true"},
+	}
+
+	script := p.ServerInstallScript(node, cfg, "jointoken", false, secFlags, "abc123certkey")
+	assert.Contains(t, script, "kubeadm join --config /tmp/kubeadm-join-config.yaml")
+	assert.Contains(t, script, "certificateKey: \"abc123certkey\"")
+	assert.NotContains(t, script, "controlPlane: {}")
 }
 
 func TestAgentInstallScript(t *testing.T) {

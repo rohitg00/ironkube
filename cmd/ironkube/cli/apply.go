@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -45,6 +46,9 @@ func NewApplyCmd() *cobra.Command {
 
 			clusterState, err := backend.Load(cfg.Metadata.Name)
 			if err != nil {
+				if !errors.Is(err, os.ErrNotExist) {
+					return fmt.Errorf("loading cluster state: %w", err)
+				}
 				clusterState = &state.ClusterState{
 					Metadata: state.StateMetadata{
 						Name:      cfg.Metadata.Name,
@@ -83,7 +87,10 @@ func NewApplyCmd() *cobra.Command {
 			startTime := time.Now()
 
 			needsBootstrap := hasCreateActions && len(clusterState.Machines) == 0
-		if needsBootstrap {
+			if hasCreateActions && !needsBootstrap {
+				return fmt.Errorf("scale-out (adding machines to an existing cluster) is not yet supported")
+			}
+			if needsBootstrap {
 				v1Cfg := pkgconfig.FromV1Alpha2(cfg)
 
 				home, homeErr := os.UserHomeDir()
