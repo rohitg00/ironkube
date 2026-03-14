@@ -1,14 +1,17 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"time"
 
+	pkgconfig "github.com/rohitg00/ironkube/pkg/config"
 	"github.com/rohitg00/ironkube/pkg/config/v1alpha2"
 	"github.com/rohitg00/ironkube/pkg/engine"
+	"github.com/rohitg00/ironkube/pkg/phases"
 	"github.com/rohitg00/ironkube/pkg/provider"
 	"github.com/rohitg00/ironkube/pkg/state"
 	"github.com/rohitg00/ironkube/pkg/state/local"
@@ -43,6 +46,9 @@ func NewApplyCmd() *cobra.Command {
 
 			clusterState, err := backend.Load(cfg.Metadata.Name)
 			if err != nil {
+				if !errors.Is(err, os.ErrNotExist) {
+					return fmt.Errorf("loading cluster state: %w", err)
+				}
 				clusterState = &state.ClusterState{
 					Metadata: state.StateMetadata{
 						Name:      cfg.Metadata.Name,
@@ -69,8 +75,59 @@ func NewApplyCmd() *cobra.Command {
 				return nil
 			}
 
+			hasCreateActions := false
+			for _, action := range result.Actions {
+				if action.Type == engine.ActionCreateMachine {
+					hasCreateActions = true
+					break
+				}
+			}
+
 			fmt.Fprintln(w, "\nApplying changes...")
 			startTime := time.Now()
+
+			needsBootstrap := hasCreateActions && len(clusterState.Machines) == 0
+			if hasCreateActions && !needsBootstrap {
+				return fmt.Errorf("scale-out (adding machines to an existing cluster) is not yet supported")
+			}
+			if needsBootstrap {
+				v1Cfg := pkgconfig.FromV1Alpha2(cfg)
+
+				home, homeErr := os.UserHomeDir()
+				if homeErr != nil {
+					return fmt.Errorf("determining home directory: %w", homeErr)
+				}
+				kubeconfigDir := filepath.Join(home, ".ironkube", "clusters", cfg.Metadata.Name)
+				if mkErr := os.MkdirAll(kubeconfigDir, 0700); mkErr != nil {
+					return fmt.Errorf("creating kubeconfig directory: %w", mkErr)
+				}
+				kubeconfigPath := filepath.Join(kubeconfigDir, "kubeconfig")
+
+				pipeline := engine.NewPipeline(
+					&phases.ValidatePhase{Config: v1Cfg},
+					&phases.ConnectPhase{Config: v1Cfg},
+					&phases.BootstrapPhase{Config: v1Cfg},
+					&phases.FetchKubeconfigPhase{Config: v1Cfg, OutputPath: kubeconfigPath},
+				)
+
+				if err := pipeline.Execute(cmd.Context()); err != nil {
+					clusterState.RecordOperation(state.OperationRecord{
+						Type:       state.OpApply,
+						Status:     state.OpStatusFailed,
+						StartedAt:  startTime,
+						FinishedAt: time.Now(),
+						Version:    cfg.Spec.Version,
+						Message:    err.Error(),
+					})
+					if saveErr := backend.Save(clusterState); saveErr != nil {
+						return fmt.Errorf("bootstrap failed: %w (additionally, saving state failed: %v)", err, saveErr)
+					}
+					return fmt.Errorf("bootstrap failed: %w", err)
+				}
+
+				fmt.Fprintf(w, "  Bootstrap complete. Kubeconfig: %s\n", kubeconfigPath)
+			}
+
 			for _, action := range result.Actions {
 				fmt.Fprintf(w, "  Executing: %s\n", action.Description)
 

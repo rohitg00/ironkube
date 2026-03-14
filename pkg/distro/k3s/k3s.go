@@ -30,7 +30,7 @@ func (k *K3s) ValidateVersion(version string) error {
 	return nil
 }
 
-func (k *K3s) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, token string, isInit bool) string {
+func (k *K3s) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, token string, isInit bool, secFlags config.SecurityFlags, _ string) string {
 	var sb strings.Builder
 
 	sb.WriteString("curl -sfL https://get.k3s.io | ")
@@ -59,7 +59,29 @@ func (k *K3s) ServerInstallScript(node config.Node, cfg *config.ClusterConfig, t
 		sb.WriteString(fmt.Sprintf(" --service-cidr=%s", cfg.Spec.Networking.SvcCIDR))
 	}
 
+	for _, f := range secFlags.Kubelet {
+		sb.WriteString(" ")
+		sb.WriteString(shellQuote(toK3sFlag("kubelet-arg", f)))
+	}
+	for _, f := range secFlags.APIServer {
+		sb.WriteString(" ")
+		sb.WriteString(shellQuote(toK3sFlag("kube-apiserver-arg", f)))
+	}
+	for _, f := range secFlags.Etcd {
+		sb.WriteString(" ")
+		sb.WriteString(shellQuote(toK3sFlag("etcd-arg", f)))
+	}
+
 	return sb.String()
+}
+
+func toK3sFlag(wrapper, raw string) string {
+	trimmed := strings.TrimPrefix(raw, "--")
+	return "--" + wrapper + "=" + trimmed
+}
+
+func shellQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", "'\"'\"'") + "'"
 }
 
 func (k *K3s) AgentInstallScript(node config.Node, cfg *config.ClusterConfig, serverURL string, token string) string {

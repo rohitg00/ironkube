@@ -150,6 +150,17 @@ func TestApplyCreatesState(t *testing.T) {
 	configPath := writeTestConfig(t, dir)
 	stateDir := filepath.Join(dir, "state")
 
+	machines := map[string]state.MachineState{
+		"10.0.0.1": {
+			ID:         "10.0.0.1",
+			Host:       "10.0.0.1",
+			Role:       "control-plane",
+			K8sVersion: "v1.27.0+k3s1",
+			Status:     "ready",
+		},
+	}
+	writeExistingState(t, stateDir, "test-cluster", machines, nil, "v1.27.0+k3s1")
+
 	cmd := NewRootCmd()
 	buf := new(bytes.Buffer)
 	cmd.SetOut(buf)

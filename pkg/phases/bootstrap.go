@@ -11,6 +11,7 @@ import (
 	"github.com/rohitg00/ironkube/pkg/config"
 	"github.com/rohitg00/ironkube/pkg/distro"
 	"github.com/rohitg00/ironkube/pkg/engine"
+	"github.com/rohitg00/ironkube/pkg/security"
 	"github.com/rohitg00/ironkube/pkg/ssh"
 )
 
@@ -36,13 +37,23 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 	token := generateToken()
 	state.Set("cluster_token", token)
 
+	secFlags, err := security.FlagsForProfile(p.Config.Spec.Security.Profile)
+	if err != nil {
+		return fmt.Errorf("resolving security flags: %w", err)
+	}
+
 	firstNode := p.Config.Spec.ControlPlane.Nodes[0]
-	installCmd := plugin.ServerInstallScript(firstNode, p.Config, token, true)
+	installCmd := plugin.ServerInstallScript(firstNode, p.Config, token, true, secFlags, "")
 
 	out, err := exec.RunOnHost(firstNode.Host, installCmd)
 	if err != nil {
 		p.Cleanup(ctx, state)
 		return fmt.Errorf("failed to bootstrap first control plane node %s: %w\nOutput: %s", firstNode.Host, err, out)
+	}
+
+	certKey := parseCertificateKey(out)
+	if certKey != "" {
+		state.Set("certificate_key", certKey)
 	}
 
 	if err := waitForNode(ctx, exec, firstNode.Host, plugin); err != nil {
@@ -52,7 +63,7 @@ func (p *BootstrapPhase) Run(ctx context.Context, state *engine.State) error {
 
 	for i := 1; i < len(p.Config.Spec.ControlPlane.Nodes); i++ {
 		node := p.Config.Spec.ControlPlane.Nodes[i]
-		joinCmd := plugin.ServerInstallScript(node, p.Config, token, false)
+		joinCmd := plugin.ServerInstallScript(node, p.Config, token, false, secFlags, certKey)
 
 		out, err := exec.RunOnHost(node.Host, joinCmd)
 		if err != nil {
@@ -187,6 +198,19 @@ func kubectlCmd(plugin distro.Plugin) string {
 	default:
 		return "kubectl --kubeconfig=/etc/kubernetes/admin.conf"
 	}
+}
+
+func parseCertificateKey(output string) string {
+	for _, line := range strings.Split(output, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "--certificate-key") {
+			parts := strings.Fields(trimmed)
+			if len(parts) >= 2 {
+				return parts[len(parts)-1]
+			}
+		}
+	}
+	return ""
 }
 
 func generateToken() string {
